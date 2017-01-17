@@ -1,0 +1,18 @@
+[requires]
+SDL2/2.0.4@lasote/stable
+glm/0.9.7.6@dlarudgus20/stable
+glew/2.0.0@coding3d/stable
+bullet3/2.83.7.98d4780@lasote/vcpkg
+
+[options]
+# sdl options
+SDL2:shared=True #False
+# glm options
+
+[generators]
+cmake
+txt
+
+[imports]
+bin, *.dll -> ./bin # Copies all dll files from packages bin folder to my "bin" folder
+lib, *.dylib* -> ./bin # Copies all dylib files from packages lib folder to my "bin" folder
