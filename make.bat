@@ -1,4 +1,4 @@
-TITLE GeaMakeFile
+TITLE BulletMagnetMakeFile
 
 ECHO build started!
 

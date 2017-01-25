@@ -1,11 +1,14 @@
 #include "includes.h"
-#include "src/Heatmap.h"
-#include "src/Histogram.h"
-#include "src/Trajectory.h"
-#include "src/DataManager.h"
 #include "bullet\btBulletDynamicsCommon.h"
 
-using namespace std;
+// tag::globalVariables[]
+// tag::using[]
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::max;
+using std::string;
+// end::using[]
 
 // tag::globalVariables[]
 std::string exeName;
@@ -13,18 +16,53 @@ SDL_Window *win; //pointer to the SDL_Window
 SDL_GLContext context; //the SDL_GLContext
 int frameCount = 0;
 std::string frameLine = "";
-
-int renderMode = 0;
-
-DataManager DM = DataManager();
-// TODO: tidy declerations and program creation
-vector<glm::vec3> positionVectorData;
-vector<GLfloat> positionVertexData;
-vector<GLfloat> powerVertexData;
-
-int positionIterator = 0;
-char* fileDirectory = "";
 // end::globalVariables[]
+
+// Bullet vars
+// end Bullet vars
+
+//our variables
+bool done = false;
+
+// tag::vertexData[]
+//the data about our geometry
+const GLfloat vertexData[] = {
+	//	 X        Y            Z          R     G     B      A
+	0.000f,  0.500f,  0.000f,    1.0f, 0.0f, 0.0f,  1.0f,
+	-0.433f, -0.250f,  0.000f,    0.0f, 1.0f, 0.0f,  1.0f,
+	0.433f, -0.250f,  0.000f,    0.0f, 0.0f, 1.0f,  1.0f
+};
+// end::vertexData[]
+
+// tag::gameState[]
+//the translation vector we'll pass to our GLSL program
+glm::vec3 position1 = { -0.5f, -0.5f, 0.0f };
+glm::vec3 velocity1 = { 0.1f, 0.1f, 0.0f };
+
+glm::vec3 position2 = { 0.8f, -0.5f , 0.0f };
+glm::vec3 velocity2 = { -0.2f, 0.15f, 0.0f };
+// end::gameState[]
+
+// tag::GLVariables[]
+//our GL and GLSL variables
+//programIDs
+GLuint theProgram; //GLuint that we'll fill in to refer to the GLSL program (only have 1 at this point)
+
+				   //attribute locations
+GLint positionLocation; //GLuint that we'll fill in with the location of the `position` attribute in the GLSL
+GLint vertexColorLocation; //GLuint that we'll fill in with the location of the `vertexColor` attribute in the GLSL
+
+						   //uniform location
+GLint modelMatrixLocation;
+GLint viewMatrixLocation;
+GLint projectionMatrixLocation;
+
+GLuint vertexDataBufferObject;
+GLuint vertexArrayObject;
+// end::GLVariables[]
+
+// end Global Variables
+/////////////////////////
 
 // tag::loadShader[]
 std::string loadShader(const string filePath) {
@@ -44,41 +82,6 @@ std::string loadShader(const string filePath) {
 	}
 }
 // end::loadShader[]
-
-//our variables
-GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-bool cameraForward = false;
-bool cameraBackward = false;
-bool cameraLeft = false;
-bool cameraRight = false;
-bool cameraRotUp = false;
-bool cameraRotDown = false;
-
-bool done = false;
-
-bool renderOverTime = false;
-float renderAmount = 0;
-
-glm::vec3 position1 = { 0.0f, 0.0f, 0.0f };
-
-GLuint theProgram; 
-
-GLint positionLocation; //GLuint that we'll fill in with the location of the `position` attribute in the GLSL
-GLint vertexColorLocation; //GLuint that we'll fill in with the location of the `vertexColor` attribute in the GLSL
-
-						   //uniform location
-GLint modelMatrixLocation;
-GLint viewMatrixLocation;
-GLint projectionMatrixLocation;
-
-GLuint vertexDataBufferObject;
-GLuint vertexArrayObject;
-
-// end::GLVariables[]
 
 // tag::initialise[]
 void initialise()
@@ -102,7 +105,7 @@ void createWindow()
 	const char *exeNameCStr = exeNameEnd.c_str();
 
 	//create window
-	win = SDL_CreateWindow(exeNameCStr, 100, 100, 1000, 1000, SDL_WINDOW_OPENGL); //same height and width makes the window square ...
+	win = SDL_CreateWindow(exeNameCStr, 100, 100, 600, 600, SDL_WINDOW_OPENGL); //same height and width makes the window square ...
 
 																				//error handling
 	if (win == nullptr)
@@ -233,8 +236,8 @@ void initializeProgram()
 {
 	std::vector<GLuint> shaderList;
 
-	shaderList.push_back(createShader(GL_VERTEX_SHADER, loadShader("C:/Users/Computing/Documents/GitHub/Game_Engine_Architecture/vertexShader.glsl")));
-	shaderList.push_back(createShader(GL_FRAGMENT_SHADER, loadShader("C:/Users/Computing/Documents/GitHub/Game_Engine_Architecture/fragmentShader.glsl")));
+	shaderList.push_back(createShader(GL_VERTEX_SHADER, loadShader("vertexShader.glsl")));
+	shaderList.push_back(createShader(GL_FRAGMENT_SHADER, loadShader("fragmentShader.glsl")));
 
 	theProgram = createProgram(shaderList);
 	if (theProgram == 0)
@@ -268,18 +271,16 @@ void initializeProgram()
 }
 // end::initializeProgram[]
 
-// TODO: make these more objectified by passing in the objects and buffers.
-
 // tag::initializeVertexArrayObject[]
-void initializeHistogramVertexArrayObject(int index)
+//setup a GL object (a VertexArrayObject) that stores how to access data and from where
+void initializeVertexArrayObject()
 {
-	// setup a GL object (a VertexArrayObject) that stores how to access data and from where
-	glGenVertexArrays(1, &DM.histograms[index].vertexObject); //create a Vertex Array Object
-	cout << "Vertex Array Object created OK! GLUint is: " << DM.histograms[index].vertexObject << std::endl;
+	glGenVertexArrays(1, &vertexArrayObject); //create a Vertex Array Object
+	cout << "Vertex Array Object created OK! GLUint is: " << vertexArrayObject << std::endl;
 
-	glBindVertexArray(DM.histograms[index].vertexObject); //make the just created vertexArrayObject the active one
+	glBindVertexArray(vertexArrayObject); //make the just created vertexArrayObject the active one
 
-	glBindBuffer(GL_ARRAY_BUFFER, DM.histograms[index].vertexBuffer); //bind vertexDataBufferObject
+	glBindBuffer(GL_ARRAY_BUFFER, vertexDataBufferObject); //bind vertexDataBufferObject
 
 	glEnableVertexAttribArray(positionLocation); //enable attribute at index positionLocation
 	glEnableVertexAttribArray(vertexColorLocation); //enable attribute at index vertexColorLocation
@@ -298,105 +299,26 @@ void initializeHistogramVertexArrayObject(int index)
 }
 // end::initializeVertexArrayObject[]
 
-void initializeHeatmapVertexArrayObject(int num, int index)
-{
-	// setup a GL object (a VertexArrayObject) that stores how to access data and from where
-	glGenVertexArrays(1, &DM.heatmaps[num].vertexObject[index]); //create a Vertex Array Object
-	cout << "Vertex Array Object created OK! GLUint is: " << DM.heatmaps[num].vertexObject[index] << std::endl;
-
-	glBindVertexArray(DM.heatmaps[num].vertexObject[index]); //make the just created vertexArrayObject the active one
-
-	glBindBuffer(GL_ARRAY_BUFFER, DM.heatmaps[num].vertexBuffer[index]); //bind vertexDataBufferObject
-
-	glEnableVertexAttribArray(positionLocation); //enable attribute at index positionLocation
-	glEnableVertexAttribArray(vertexColorLocation); //enable attribute at index vertexColorLocation
-
-													// tag::glVertexAttribPointer[]
-	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(0 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index positionLocation
-	glVertexAttribPointer(vertexColorLocation, 4, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(3 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index vertexColorLocation
-																																// end::glVertexAttribPointer[]
-
-	glBindVertexArray(0); //unbind the vertexArrayObject so we can't change it
-
-						  //cleanup
-	glDisableVertexAttribArray(positionLocation); //disable vertex attribute at index positionLocation
-	glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind array buffer
-
-}
-
-void initializeTrajectoryVertexArrayObject(int index)
-{
-	// setup a GL object (a VertexArrayObject) that stores how to access data and from where
-	glGenVertexArrays(1, &DM.trajectories[index].vertexObject); //create a Vertex Array Object
-	cout << "Vertex Array Object created OK! GLUint is: " << DM.trajectories[index].vertexObject << std::endl;
-
-	glBindVertexArray(DM.trajectories[index].vertexObject); //make the just created vertexArrayObject the active one
-
-	glBindBuffer(GL_ARRAY_BUFFER, DM.trajectories[index].vertexBuffer); //bind vertexDataBufferObject
-
-	glEnableVertexAttribArray(positionLocation); //enable attribute at index positionLocation
-	glEnableVertexAttribArray(vertexColorLocation); //enable attribute at index vertexColorLocation
-
-													// tag::glVertexAttribPointer[]
-	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(0 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index positionLocation
-	glVertexAttribPointer(vertexColorLocation, 4, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(3 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index vertexColorLocation
-																																// end::glVertexAttribPointer[]
-
-	glBindVertexArray(0); //unbind the vertexArrayObject so we can't change it
-
-						  //cleanup
-	glDisableVertexAttribArray(positionLocation); //disable vertex attribute at index positionLocation
-	glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind array buffer
-
-}
-
 // tag::initializeVertexBuffer[]
-// TODO: make these more uniform and create for more single objects for tags/ title etc
-void initializeHeatmapVertexBuffers(vector<GLfloat> data, int num, int index)
+void initializeVertexBuffer()
 {
-	glGenBuffers(1, &DM.heatmaps[num].vertexBuffer[index]);
+	glGenBuffers(1, &vertexDataBufferObject);
 
-	glBindBuffer(GL_ARRAY_BUFFER, DM.heatmaps[num].vertexBuffer[index]);
-	glBufferData(GL_ARRAY_BUFFER, (data.size() * sizeof(GLfloat))/ 10, &data.at(index * 42000), GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexDataBufferObject);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	cout << "vertexDataBufferObject created OK! GLUint is: " << DM.heatmaps[num].vertexBuffer[index] << std::endl;
+	cout << "vertexDataBufferObject created OK! GLUint is: " << vertexDataBufferObject << std::endl;
 
-	initializeHeatmapVertexArrayObject(num, index);
-}
-
-void initializeHistogramVertexBuffer(vector<GLfloat> data, int index)
-{
-	glGenBuffers(1, &DM.histograms[index].vertexBuffer);
-
-	glBindBuffer(GL_ARRAY_BUFFER, DM.histograms[index].vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	cout << "vertexDataBufferObject created OK! GLUint is: " << DM.histograms[index].vertexBuffer << std::endl;
-
-	initializeHistogramVertexArrayObject(index);
-}
-
-void initializeTrajectoryVertexBuffer(vector<GLfloat> data,  int index)
-{
-	glGenBuffers(1, &DM.trajectories[index].vertexBuffer);
-
-	glBindBuffer(GL_ARRAY_BUFFER, DM.trajectories[index].vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data.front(), GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	cout << "vertexDataBufferObject created OK! GLUint is: " << DM.trajectories[index].vertexBuffer << std::endl;
-
-	initializeTrajectoryVertexArrayObject(index);
+	initializeVertexArrayObject();
 }
 // end::initializeVertexBuffer[]
-
-//TODO: redefine asset loading more appropriatley
 
 // tag::loadAssets[]
 void loadAssets()
 {
 	initializeProgram(); //create GLSL Shaders, link into a GLSL program, and get IDs of attributes and variables
 
-	//initializeVertexBuffer(); //load data into a vertex buffer
+	initializeVertexBuffer(); //load data into a vertex buffer
 
 	cout << "Loaded Assets OK!\n";
 }
@@ -407,122 +329,24 @@ void handleInput()
 {
 	SDL_Event event; //somewhere to store an event
 
-					 //NOTE: there may be multiple events per frame
 	while (SDL_PollEvent(&event)) //loop until SDL_PollEvent returns 0 (meaning no more events)
 	{
 		switch (event.type)
 		{
 		case SDL_QUIT:
-			done = true; //set donecreate remote branch flag if SDL wants to quit (i.e. if the OS has triggered a close event,
-						 //  - such as window close, or SIGINT
+			done = true;
+						
 			break;
 
 			//keydown handling - we should to the opposite on key-up for direction controls (generally)
 		case SDL_KEYDOWN:
-			//Keydown can fire repeatable if key-repeat is on.
-			//  - the repeat flag is set on the keyboard event, if this is a repeat event
-			//  - in our case, we're going to ignore repeat events
-			//  - https://wiki.libsdl.org/SDL_KeyboardEvent
 			if (!event.key.repeat)
 				switch (event.key.keysym.sym)
 				{
 					//hit escape to exit
 				case SDLK_ESCAPE: done = true;
-					break;
-				case SDLK_t: renderOverTime = true;
-					renderAmount = 0.0f;
-					break;
-				case SDLK_1: renderMode = 1;
-					cameraPosition = glm::vec3(0.0f, 0.0f, -2.0f);
-					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-					cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-					break;
-				case SDLK_2: renderMode = 2;
-					cameraPosition = glm::vec3(0.0f, 0.0f, -2.0f);
-					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-					cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-					break;
-				case SDLK_3: renderMode = 3;
-					cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
-					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-					cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-					break;
-				case SDLK_UP: cameraForward = true;
-					break;
-				case SDLK_DOWN: cameraBackward = true;
-					break;
-				case SDLK_LEFT: cameraLeft = true;
-					break;
-				case SDLK_RIGHT: cameraRight = true;
-					break;
-				case SDLK_a: cameraRotUp = true;
-					break;
-				case SDLK_d: cameraRotDown = true;
-					break;
-				case SDLK_SPACE: cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
-					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-					cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-					break;
 				}
 			break;
-		case SDL_KEYUP:
-			event.key.repeat = true;
-			if (event.key.repeat)
-				switch (event.key.keysym.sym)
-				{
-				case SDLK_UP: cameraForward = false;
-					break;
-				case SDLK_DOWN: cameraBackward = false;
-					break;
-				case SDLK_LEFT: cameraLeft = false;
-					break;
-				case SDLK_RIGHT: cameraRight = false;
-					break;
-				case SDLK_a: cameraRotUp = false;
-					break;
-				case SDLK_d: cameraRotDown = false;
-					break;
-				}
-			break;
-			// TODO: make functions for some of these
-		case SDL_DROPFILE:
-			fileDirectory = event.drop.file;
-			/*SDL_ShowSimpleMessageBox(
-				SDL_MESSAGEBOX_INFORMATION,
-				"File Dropped on Window",
-				fileDirectory,
-				win
-			);*/
-			int type = DM.loadFile(fileDirectory);
-			switch (type) 
-			{
-			case 1: 
-				for (int p = 0; p < DM.trajectories.size(); p++)
-				{
-					initializeTrajectoryVertexBuffer(DM.trajectories[p].vertexData, p);
-				}
-				for (int i = 0; i < DM.heatmaps.size(); i++)
-				{
-					if (DM.heatmaps[i].ready == true)
-					{
-						for (int x = 0; x < DM.heatmaps[i].vertexBuffer.size(); x++)
-						{
-							initializeHeatmapVertexBuffers(DM.heatmaps[i].vertexData, i, x);
-						}
-					}
-				}
-				break;
-			case 2: 
-				for (int i = 0; i < DM.histograms.size(); i++)
-				{
-					initializeHistogramVertexBuffer(DM.histograms[i].vertexData, i);
-				}
-				for (int p = 0; p < DM.trajectories.size(); p++)
-				{
-					initializeTrajectoryVertexBuffer(DM.trajectories[p].vertexData, p);
-				}
-				break;
-			}
 		}
 	}
 }
@@ -531,38 +355,20 @@ void handleInput()
 // tag::updateSimulation[]
 void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
 {
-	if (renderAmount <= 420000.0f)
-	{
-		renderAmount += 10.0f;
-	}
+	//WARNING - we should calculate an appropriate amount of time to simulate - not always use a constant amount of time
+	// see, for example, http://headerphile.blogspot.co.uk/2014/07/part-9-no-more-delays.html
 
-	if (cameraForward == true) {
-		cameraPosition -= cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
-	}
-	if (cameraBackward == true) {
-		cameraPosition += cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
-	}
-	if (cameraLeft == true) {
-		cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	}
-	if (cameraRight == true) {
-		cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	}
-	if (cameraRotUp == true) {
-		cameraPosition += glm::normalize(glm::cross(cameraFront, glm::vec3(1.0f, 0.0f, 0.0f))) * cameraSpeed;
-	}
-	if (cameraRotDown == true) {
-		cameraPosition -= glm::normalize(glm::cross(cameraFront, glm::vec3(1.0f, 0.0f, 0.0f))) * cameraSpeed;
-	}
-	
+	position1 += float(simLength) * velocity1;
+	position2 += float(simLength) * velocity2;
+
 }
 // end::updateSimulation[]
 
 // tag::preRender[]
 void preRender()
 {
-	glViewport(0, 0, 1000, 1000); //set viewpoint
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //set clear colour
+	glViewport(0, 0, 600, 600); //set viewpoint
+	glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //set clear colour
 	glClear(GL_COLOR_BUFFER_BIT); //clear the window (technical the scissor box bounds)
 }
 // end::preRender[]
@@ -571,103 +377,26 @@ void preRender()
 void render()
 {
 	glUseProgram(theProgram); //installs the program object specified by program as part of current rendering state
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glBindVertexArray(vertexArrayObject);
+
+	//set projectionMatrix - how we go from 3D to 2D
+	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(glm::mat4(1.0)));
+
+	//set viewMatrix - how we control the view (viewpoint, view direction, etc)
+	glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(glm::mat4(1.0f)));
+
+
+	//set modelMatrix and draw for triangle 1
 	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position1);
+	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 
-	glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
+	//set modelMatrix and draw for triangle 2
+	modelMatrix = glm::translate(glm::mat4(1.0f), position2);
+	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 
-	glm::mat4 projection;
-	projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
-	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
-	// TODO: make this more objectified and add option for render fro texture for heatmaps
-	switch (renderMode)
-	{
-	case 0:
-		break;
-
-	case 1:
-		if (DM.trajectories.size() > 0)
-		{
-			if (renderOverTime == false)
-			{
-				for (int x = 0; x < DM.trajectories.size(); x++)
-				{
-					glBindVertexArray(DM.trajectories[x].vertexObject);
-
-					//set projectionMatrix - how we go from 3D to 2D
-					//set viewMatrix - how we control the view (viewpoint, view direction, etc)
-					glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
-
-					glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-					glLineWidth(5);
-					glDrawArrays(GL_LINE_STRIP, 0, DM.trajectories[x].vertexData.size() / 7);
-				}
-			}
-			else
-			{
-				for (int x = 0; x < DM.trajectories.size(); x++)
-				{
-					glBindVertexArray(DM.trajectories[x].vertexObject);
-
-					//set projectionMatrix - how we go from 3D to 2D
-					//set viewMatrix - how we control the view (viewpoint, view direction, etc)
-					glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
-
-					glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-					glLineWidth(5);
-					if (renderAmount <= (DM.trajectories[x].vertexData.size() / 7))
-					{
-						glDrawArrays(GL_LINE_STRIP, 0, (renderAmount));
-					}	
-					else
-					{
-						glDrawArrays(GL_LINE_STRIP, 0, (DM.trajectories[x].vertexData.size() / 7));
-					}
-				}
-			}
-		}
-		break;
-
-	case 2:
-		if (DM.histograms.size() > 0)
-		{
-			for (int x = 0; x < DM.histograms.size(); x++)
-			{
-				glBindVertexArray(DM.histograms[x].vertexObject);
-
-				//set projectionMatrix - how we go from 3D to 2D
-				//set viewMatrix - how we control the view (viewpoint, view direction, etc)
-				glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
-
-				glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-				glDrawArrays(GL_TRIANGLES, 0, DM.histograms[x].vertexData.size() / 7);
-			}
-		}
-		break;
-
-	case 3:
-		if (DM.heatmaps.size() > 0)
-		{
-			for (int x = 0; x < DM.heatmaps.size(); x++)
-			{
-				if (DM.heatmaps[x].ready == true)
-				{
-					for (int i = 0; i < 10; i++)
-					{
-						glBindVertexArray(DM.heatmaps[x].vertexObject[i]);
-						//set projectionMatrix - how we go from 3D to 2D
-						//set viewMatrix - how we control the view (viewpoint, view direction, etc)
-						glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
-
-						glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-						glDrawArrays(GL_TRIANGLES, 0, DM.heatmaps[x].vertexData.size() / 70);
-					}
-				}
-			}
-		}
-		break;
-	}
 	glBindVertexArray(0);
 
 	glUseProgram(0); //clean up
@@ -696,65 +425,40 @@ void cleanUp()
 // tag::main[]
 int main(int argc, char* args[])
 {
-	std::cout << "Hello World!" << std::endl;
-	// define and set up the dynamic world
-	btBroadphaseInterface* broadphase = new btDbvtBroadphase();
+	exeName = args[0];
+	//setup
+	//- do just once
+	initialise();
+	createWindow();
 
-	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
-	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
+	createContext();
 
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	initGlew();
 
-	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+	glViewport(0, 0, 600, 600); //should check what the actual window res is?
 
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+								//do stuff that only needs to happen once
+								//- create shaders
+								//- load vertex data
+	loadAssets();
 
-	// create shapes
-	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
-	btCollisionShape* fallShape = new btSphereShape(1);
-
-	// define ground properties and add to world
-	btDefaultMotionState* groundMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)));
-	btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, groundShape, btVector3(0, 0, 0));
-	btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
-	dynamicsWorld->addRigidBody(groundRigidBody);
-
-	// define sphere properties and add to world
-	btDefaultMotionState* fallMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 50, 0)));
-	btScalar mass = 1;
-	btVector3 fallInertia(0, 0, 0);
-	fallShape->calculateLocalInertia(mass, fallInertia);
-	btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState, fallShape, fallInertia);
-	btRigidBody* fallRigidBody = new btRigidBody(fallRigidBodyCI);
-	dynamicsWorld->addRigidBody(fallRigidBody);
-
-	for (int i = 0; i < 300; i++)
+	while (!done) //loop until done flag is set)
 	{
-		dynamicsWorld->stepSimulation(1 / 60.0f, 10);
+		handleInput(); // this should ONLY SET VARIABLES
 
-		btTransform trans;
-		fallRigidBody->getMotionState()->getWorldTransform(trans);
+		updateSimulation(); // this should ONLY SET VARIABLES according to simulation
 
-		std::cout << "sphere height: " << trans.getOrigin().getY() << std::endl;
+		preRender();
+
+		render(); // this should render the world state according to VARIABLES -
+
+		postRender();
+
 	}
 
-	// cleanup
-	dynamicsWorld->removeRigidBody(fallRigidBody);
-	delete fallRigidBody->getMotionState();
-	delete fallRigidBody;
-
-	dynamicsWorld->removeRigidBody(groundRigidBody);
-	delete groundRigidBody->getMotionState();
-	delete groundRigidBody;
-
-	delete fallShape;
-	delete groundShape;
-
-	delete dynamicsWorld;
-	delete solver;
-	delete dispatcher;
-	delete collisionConfiguration;
-	delete broadphase;
+	//cleanup and exit
+	cleanUp();
+	SDL_Quit();
 
 	return 0;
 }
