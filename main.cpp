@@ -1,4 +1,6 @@
 #include "includes.h"
+#include "src/BulletWorld.h"
+#include "src/BulletShape.h"
 #include "bullet\btBulletDynamicsCommon.h"
 
 // tag::globalVariables[]
@@ -19,6 +21,11 @@ std::string frameLine = "";
 // end::globalVariables[]
 
 // Bullet vars
+BulletWorld bWorld = BulletWorld();
+btCollisionShape* btsphere = new btSphereShape(1);
+BulletShape sphere = BulletShape(btsphere, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 50, 0)), btScalar(1));
+btCollisionShape* btplane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
+BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0));
 // end Bullet vars
 
 //our variables
@@ -361,6 +368,13 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 	position1 += float(simLength) * velocity1;
 	position2 += float(simLength) * velocity2;
 
+	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 10);
+
+	btTransform trans;
+	sphere.rigidBody->getMotionState()->getWorldTransform(trans);
+
+	std::cout << "sphere height: " << trans.getOrigin().getY() << std::endl;
+
 }
 // end::updateSimulation[]
 
@@ -427,8 +441,8 @@ int main(int argc, char* args[])
 {
 	exeName = args[0];
 	//setup
-	//- do just once
 	initialise();
+
 	createWindow();
 
 	createContext();
@@ -437,10 +451,14 @@ int main(int argc, char* args[])
 
 	glViewport(0, 0, 600, 600); //should check what the actual window res is?
 
-								//do stuff that only needs to happen once
-								//- create shaders
-								//- load vertex data
 	loadAssets();
+
+	// bullet sim
+	bWorld.dynamicsWorld->addRigidBody(place.rigidBody);
+	btVector3 fall(0, 0, 0);
+	sphere.shape->calculateLocalInertia(sphere.mass, fall);
+	bWorld.dynamicsWorld->addRigidBody(sphere.rigidBody);
+	//end bullet sim
 
 	while (!done) //loop until done flag is set)
 	{
