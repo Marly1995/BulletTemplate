@@ -19,11 +19,12 @@ SDL_GLContext context; //the SDL_GLContext
 int frameCount = 0;
 std::string frameLine = "";
 // end::globalVariables[]
+glm::mat4 modelMatrix;
 
 // Bullet vars
 BulletWorld bWorld = BulletWorld();
-btCollisionShape* btsphere = new btSphereShape(1);
-BulletShape sphere = BulletShape(btsphere, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 50, 0)), btScalar(1));
+btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
+BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 500, 0)), btScalar(1));
 btCollisionShape* btplane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
 BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0));
 // end Bullet vars
@@ -35,19 +36,69 @@ bool done = false;
 //the data about our geometry
 const GLfloat vertexData[] = {
 	//	 X        Y            Z          R     G     B      A
-	0.000f,  0.500f,  0.000f,    1.0f, 0.0f, 0.0f,  1.0f,
-	-0.433f, -0.250f,  0.000f,    0.0f, 1.0f, 0.0f,  1.0f,
-	0.433f, -0.250f,  0.000f,    0.0f, 0.0f, 1.0f,  1.0f
+	-0.1f, -0.1f, -0.1f,
+	0.1f, -0.1f, -0.1f,
+	0.1f,  0.1f, -0.1f,
+	0.1f,  0.1f, -0.1f,
+	-0.1f,  0.1f, -0.1f,
+	-0.1f, -0.1f, -0.1f,
+
+	-0.1f, -0.1f,  0.1f,
+	0.1f, -0.1f,  0.1f,
+	0.1f,  0.1f,  0.1f,
+	0.1f,  0.1f,  0.1f,
+	-0.1f,  0.1f,  0.1f,
+	-0.1f, -0.1f,  0.1f,
+
+	-0.1f,  0.1f,  0.1f,
+	-0.1f,  0.1f, -0.1f,
+	-0.1f, -0.1f, -0.1f,
+	-0.1f, -0.1f, -0.1f,
+	-0.1f, -0.1f,  0.1f,
+	-0.1f,  0.1f,  0.1f,
+
+	0.1f,  0.1f,  0.1f,
+	0.1f,  0.1f, -0.1f,
+	0.1f, -0.1f, -0.1f,
+	0.1f, -0.1f, -0.1f,
+	0.1f, -0.1f,  0.1f,
+	0.1f,  0.1f,  0.1f,
+
+	-0.1f, -0.1f, -0.1f,
+	0.1f, -0.1f, -0.1f,
+	0.1f, -0.1f,  0.1f,
+	0.1f, -0.1f,  0.1f,
+	-0.1f, -0.1f,  0.1f,
+	-0.1f, -0.1f, -0.1f,
+
+	-0.1f,  0.1f, -0.1f,
+	0.1f,  0.1f, -0.1f,
+	0.1f,  0.1f,  0.1f,
+	0.1f,  0.1f,  0.1f,
+	-0.1f,  0.1f,  0.1f,
+	-0.1f,  0.1f, -0.1f
 };
 // end::vertexData[]
 
 // tag::gameState[]
 //the translation vector we'll pass to our GLSL program
-glm::vec3 position1 = { -0.5f, -0.5f, 0.0f };
+glm::vec3 position1 = { 0.0f, 0.0f, 0.0f };
 glm::vec3 velocity1 = { 0.1f, 0.1f, 0.0f };
 
-glm::vec3 position2 = { 0.8f, -0.5f , 0.0f };
+glm::vec3 position2 = { 0.0f, 0.0f , 0.0f };
 glm::vec3 velocity2 = { -0.2f, 0.15f, 0.0f };
+
+GLfloat cameraSpeed = 0.05f;
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+bool cameraForward = false;
+bool cameraBackward = false;
+bool cameraLeft = false;
+bool cameraRight = false;
+bool cameraRotUp = false;
+bool cameraRotDown = false;
 // end::gameState[]
 
 // tag::GLVariables[]
@@ -243,8 +294,8 @@ void initializeProgram()
 {
 	std::vector<GLuint> shaderList;
 
-	shaderList.push_back(createShader(GL_VERTEX_SHADER, loadShader("vertexShader.glsl")));
-	shaderList.push_back(createShader(GL_FRAGMENT_SHADER, loadShader("fragmentShader.glsl")));
+	shaderList.push_back(createShader(GL_VERTEX_SHADER, loadShader("C:/Users/Computing/Documents/GitHub/BulletTemplate/vertexShader.glsl")));
+	shaderList.push_back(createShader(GL_FRAGMENT_SHADER, loadShader("C:/Users/Computing/Documents/GitHub/BulletTemplate/fragmentShader.glsl")));
 
 	theProgram = createProgram(shaderList);
 	if (theProgram == 0)
@@ -290,11 +341,11 @@ void initializeVertexArrayObject()
 	glBindBuffer(GL_ARRAY_BUFFER, vertexDataBufferObject); //bind vertexDataBufferObject
 
 	glEnableVertexAttribArray(positionLocation); //enable attribute at index positionLocation
-	glEnableVertexAttribArray(vertexColorLocation); //enable attribute at index vertexColorLocation
+	//glEnableVertexAttribArray(vertexColorLocation); //enable attribute at index vertexColorLocation
 
 													// tag::glVertexAttribPointer[]
-	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(0 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index positionLocation
-	glVertexAttribPointer(vertexColorLocation, 4, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(3 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index vertexColorLocation
+	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, 0); //specify that position data contains four floats per vertex, and goes into attribute index positionLocation
+//	glVertexAttribPointer(vertexColorLocation, 4, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(3 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index vertexColorLocation
 																																// end::glVertexAttribPointer[]
 
 	glBindVertexArray(0); //unbind the vertexArrayObject so we can't change it
@@ -352,8 +403,45 @@ void handleInput()
 				{
 					//hit escape to exit
 				case SDLK_ESCAPE: done = true;
+					break;
+
+				case SDLK_UP: cameraForward = true;
+					break;
+				case SDLK_DOWN: cameraBackward = true;
+					break;
+				case SDLK_LEFT: cameraLeft = true;
+					break;
+				case SDLK_RIGHT: cameraRight = true;
+					break;
+				case SDLK_a: cameraRotUp = true;
+					break;
+				case SDLK_d: cameraRotDown = true;
+					break;
+				case SDLK_SPACE: cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
+					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+					cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+					break;
 				}
 			break;
+
+		case SDL_KEYUP:
+			event.key.repeat = true;
+			if (event.key.repeat)
+				switch (event.key.keysym.sym)
+				{
+				case SDLK_UP: cameraForward = false;
+					break;
+				case SDLK_DOWN: cameraBackward = false;
+					break;
+				case SDLK_LEFT: cameraLeft = false;
+					break;
+				case SDLK_RIGHT: cameraRight = false;
+					break;
+				case SDLK_a: cameraRotUp = false;
+					break;
+				case SDLK_d: cameraRotDown = false;
+					break;
+				}
 		}
 	}
 }
@@ -362,19 +450,38 @@ void handleInput()
 // tag::updateSimulation[]
 void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
 {
-	//WARNING - we should calculate an appropriate amount of time to simulate - not always use a constant amount of time
-	// see, for example, http://headerphile.blogspot.co.uk/2014/07/part-9-no-more-delays.html
+	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 1);
 
-	position1 += float(simLength) * velocity1;
-	position2 += float(simLength) * velocity2;
+	btTransform sphereTrans;
+	btTransform planeTrans;
+	float mat[16];
+	cube.rigidBody->getMotionState()->getWorldTransform(sphereTrans);
+	sphereTrans.getOpenGLMatrix(mat);
+	position1 = glm::vec3(sphereTrans.getOrigin().getX(), sphereTrans.getOrigin().getY(), sphereTrans.getOrigin().getZ());
+	std::cout << "sphere height: " << sphereTrans.getOrigin().getY() << std::endl;
+	place.rigidBody->getMotionState()->getWorldTransform(planeTrans);
+	planeTrans.getOpenGLMatrix(mat);
+	position2 = glm::vec3(planeTrans.getOrigin().getX(), planeTrans.getOrigin().getY(), planeTrans.getOrigin().getZ());
+	
 
-	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 10);
-
-	btTransform trans;
-	sphere.rigidBody->getMotionState()->getWorldTransform(trans);
-
-	std::cout << "sphere height: " << trans.getOrigin().getY() << std::endl;
-
+	if (cameraForward == true) {
+		cameraPosition -= cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
+	}
+	if (cameraBackward == true) {
+		cameraPosition += cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
+	}
+	if (cameraLeft == true) {
+		cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+	if (cameraRight == true) {
+		cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+	if (cameraRotUp == true) {
+		cameraPosition += glm::normalize(glm::cross(cameraFront, glm::vec3(1.0f, 0.0f, 0.0f))) * cameraSpeed;
+	}
+	if (cameraRotDown == true) {
+		cameraPosition -= glm::normalize(glm::cross(cameraFront, glm::vec3(1.0f, 0.0f, 0.0f))) * cameraSpeed;
+	}
 }
 // end::updateSimulation[]
 
@@ -394,22 +501,26 @@ void render()
 
 	glBindVertexArray(vertexArrayObject);
 
+	glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
+
+	glm::mat4 projection;
+	projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
 	//set projectionMatrix - how we go from 3D to 2D
-	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(glm::mat4(1.0)));
+	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
 
 	//set viewMatrix - how we control the view (viewpoint, view direction, etc)
-	glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(glm::mat4(1.0f)));
+	glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
 
 
 	//set modelMatrix and draw for triangle 1
-	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position1);
+	modelMatrix = glm::translate(glm::mat4(1.0f), position1);
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	//set modelMatrix and draw for triangle 2
 	modelMatrix = glm::translate(glm::mat4(1.0f), position2);
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	glBindVertexArray(0);
 
@@ -456,8 +567,8 @@ int main(int argc, char* args[])
 	// bullet sim
 	bWorld.dynamicsWorld->addRigidBody(place.rigidBody);
 	btVector3 fall(0, 0, 0);
-	sphere.shape->calculateLocalInertia(sphere.mass, fall);
-	bWorld.dynamicsWorld->addRigidBody(sphere.rigidBody);
+	cube.shape->calculateLocalInertia(cube.mass, fall);
+	bWorld.dynamicsWorld->addRigidBody(cube.rigidBody);
 	//end bullet sim
 
 	while (!done) //loop until done flag is set)
