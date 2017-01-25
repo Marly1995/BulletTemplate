@@ -24,8 +24,8 @@ glm::mat4 modelMatrix;
 // Bullet vars
 BulletWorld bWorld = BulletWorld();
 btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 500, 0)), btScalar(1));
-btCollisionShape* btplane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
+BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 25, 0)), btScalar(0.5));
+btCollisionShape* btplane = new btStaticPlaneShape(btVector3(0, 1, 0), 0.1);
 BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0));
 // end Bullet vars
 
@@ -89,7 +89,7 @@ glm::vec3 position2 = { 0.0f, 0.0f , 0.0f };
 glm::vec3 velocity2 = { -0.2f, 0.15f, 0.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -25.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
