@@ -25,8 +25,10 @@ glm::mat4 modelMatrix;
 BulletWorld bWorld = BulletWorld();
 btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
 BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(5, 15, 0)), btScalar(1), 0.1f);
-btCollisionShape* btplane = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 0, 0)), btScalar(0), 1.0f);
+btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.1, 0.1, 0.1));
+BulletShape magnet = BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 1, 0)), btScalar(5), 0.1f);
+btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
+BulletShape plane = BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f);
 // end Bullet vars
 
 //our variables
@@ -89,7 +91,7 @@ glm::vec3 position2 = { 0.0f, 0.0f , 0.0f };
 glm::vec3 velocity2 = { -0.2f, 0.15f, 0.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(5.0f, -4.0f, -15.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -15.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -450,22 +452,25 @@ void handleInput()
 // tag::updateSimulation[]
 void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
 {
-	bWorld.dynamicsWorld->stepSimulation(1 / 120.f, 1);
+	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 1);
 
 	btTransform sphereTrans;
 	btTransform planeTrans;
-	float mat[16];
 	cube.rigidBody->getMotionState()->getWorldTransform(sphereTrans);
 	sphereTrans.getOpenGLMatrix(glm::value_ptr(cube.GLmatrix));
-	std::cout << "sphere height: " << sphereTrans.getOrigin().getX() << std::endl;
-	place.rigidBody->getMotionState()->getWorldTransform(planeTrans);
-	planeTrans.getOpenGLMatrix(glm::value_ptr(place.GLmatrix));
+	std::cout << "sphere height: " << sphereTrans.getOrigin().getY() << std::endl;
+	magnet.rigidBody->getMotionState()->getWorldTransform(planeTrans);
+	planeTrans.getOpenGLMatrix(glm::value_ptr(magnet.GLmatrix));
 
 
 	// first magnet attraction v1
 	if (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) <= 5.0f)
 	{
-		cube.rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (sphereTrans.getOrigin().distance(planeTrans.getOrigin())));
+		cube.rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (5 - sphereTrans.getOrigin().distance(planeTrans.getOrigin())));
+	}
+	if (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) <= 2.0f)
+	{
+		cube.rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (2 - sphereTrans.getOrigin().distance(planeTrans.getOrigin())));
 	}
 	//
 
@@ -497,6 +502,7 @@ void preRender()
 	glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //set clear colour
 	glClear(GL_COLOR_BUFFER_BIT); //clear the window (technical the scissor box bounds)
 }
+
 // end::preRender[]
 
 // tag::render[]
@@ -523,7 +529,7 @@ void render()
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	//set modelMatrix and draw for triangle 2
-	modelMatrix = place.GLmatrix;
+	modelMatrix = magnet.GLmatrix;
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -570,11 +576,13 @@ int main(int argc, char* args[])
 	loadAssets();
 
 	// bullet sim
-	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
-	bWorld.dynamicsWorld->addRigidBody(place.rigidBody);
 	btVector3 fall(0, 0, 0);
+	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
+	magnet.shape->calculateLocalInertia(magnet.mass, fall);
+	bWorld.dynamicsWorld->addRigidBody(magnet.rigidBody);
 	cube.shape->calculateLocalInertia(cube.mass, fall);
 	bWorld.dynamicsWorld->addRigidBody(cube.rigidBody);
+	bWorld.dynamicsWorld->addRigidBody(plane.rigidBody);
 	//end bullet sim
 
 	while (!done) //loop until done flag is set)
