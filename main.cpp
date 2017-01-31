@@ -450,7 +450,7 @@ void handleInput()
 // tag::updateSimulation[]
 void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
 {
-	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 1);
+	bWorld.dynamicsWorld->stepSimulation(1 / 120.f, 1);
 
 	btTransform sphereTrans;
 	btTransform planeTrans;
@@ -465,10 +465,9 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 	// first magnet attraction v1
 	if (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) <= 5.0f)
 	{
-		cube.rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) / 10));
+		cube.rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (sphereTrans.getOrigin().distance(planeTrans.getOrigin())));
 	}
 	//
-	
 
 	if (cameraForward == true) {
 		cameraPosition -= cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
