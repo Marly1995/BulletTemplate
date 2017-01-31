@@ -24,9 +24,9 @@ glm::mat4 modelMatrix;
 // Bullet vars
 BulletWorld bWorld = BulletWorld();
 btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 25, 0)), btScalar(0.5), 0.1f);
-btCollisionShape* btplane = new btStaticPlaneShape(btVector3(0, 1, 0), 0.1);
-BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f);
+BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(5, 15, 0)), btScalar(1), 0.1f);
+btCollisionShape* btplane = new btBoxShape(btVector3(0.1, 0.1, 0.1));
+BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 0, 0)), btScalar(0), 1.0f);
 // end Bullet vars
 
 //our variables
@@ -89,7 +89,7 @@ glm::vec3 position2 = { 0.0f, 0.0f , 0.0f };
 glm::vec3 velocity2 = { -0.2f, 0.15f, 0.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -15.0f);
+glm::vec3 cameraPosition = glm::vec3(5.0f, -4.0f, -15.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -457,11 +457,17 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 	float mat[16];
 	cube.rigidBody->getMotionState()->getWorldTransform(sphereTrans);
 	sphereTrans.getOpenGLMatrix(glm::value_ptr(cube.GLmatrix));
-	//position1 = glm::vec3(sphereTrans.getOrigin().getX(), sphereTrans.getOrigin().getY(), sphereTrans.getOrigin().getZ());
-	std::cout << "sphere height: " << sphereTrans.getOrigin().getY() << std::endl;
+	std::cout << "sphere height: " << sphereTrans.getOrigin().getX() << std::endl;
 	place.rigidBody->getMotionState()->getWorldTransform(planeTrans);
 	planeTrans.getOpenGLMatrix(glm::value_ptr(place.GLmatrix));
-	//position2 = glm::vec3(planeTrans.getOrigin().getX(), planeTrans.getOrigin().getY(), planeTrans.getOrigin().getZ());
+
+
+	// first magnet attraction v1
+	if (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) <= 5.0f)
+	{
+		cube.rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) / 10));
+	}
+	//
 	
 
 	if (cameraForward == true) {
@@ -565,6 +571,7 @@ int main(int argc, char* args[])
 	loadAssets();
 
 	// bullet sim
+	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
 	bWorld.dynamicsWorld->addRigidBody(place.rigidBody);
 	btVector3 fall(0, 0, 0);
 	cube.shape->calculateLocalInertia(cube.mass, fall);
