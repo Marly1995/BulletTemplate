@@ -17,3 +17,17 @@ BulletShape::~BulletShape()
 	delete rigidBody;
 	delete shape;
 }
+
+void BulletShape::CreateVertexData()
+{
+	if (shape->getName() == "btBoxShape")
+	{
+		CreateBox();
+	}
+}
+
+void BulletShape::CreateBox()
+{
+	float scale = shape->getLocalScaling().x;
+	std::cout << scale << std::endl;
+}

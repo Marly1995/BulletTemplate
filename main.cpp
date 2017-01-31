@@ -89,7 +89,7 @@ glm::vec3 position2 = { 0.0f, 0.0f , 0.0f };
 glm::vec3 velocity2 = { -0.2f, 0.15f, 0.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -25.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -15.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -163,7 +163,7 @@ void createWindow()
 	const char *exeNameCStr = exeNameEnd.c_str();
 
 	//create window
-	win = SDL_CreateWindow(exeNameCStr, 100, 100, 600, 600, SDL_WINDOW_OPENGL); //same height and width makes the window square ...
+	win = SDL_CreateWindow(exeNameCStr, 100, 100, 1000, 1000, SDL_WINDOW_OPENGL); //same height and width makes the window square ...
 
 																				//error handling
 	if (win == nullptr)
@@ -456,12 +456,12 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 	btTransform planeTrans;
 	float mat[16];
 	cube.rigidBody->getMotionState()->getWorldTransform(sphereTrans);
-	sphereTrans.getOpenGLMatrix(mat);
-	position1 = glm::vec3(sphereTrans.getOrigin().getX(), sphereTrans.getOrigin().getY(), sphereTrans.getOrigin().getZ());
+	sphereTrans.getOpenGLMatrix(glm::value_ptr(cube.GLmatrix));
+	//position1 = glm::vec3(sphereTrans.getOrigin().getX(), sphereTrans.getOrigin().getY(), sphereTrans.getOrigin().getZ());
 	std::cout << "sphere height: " << sphereTrans.getOrigin().getY() << std::endl;
 	place.rigidBody->getMotionState()->getWorldTransform(planeTrans);
-	planeTrans.getOpenGLMatrix(mat);
-	position2 = glm::vec3(planeTrans.getOrigin().getX(), planeTrans.getOrigin().getY(), planeTrans.getOrigin().getZ());
+	planeTrans.getOpenGLMatrix(glm::value_ptr(place.GLmatrix));
+	//position2 = glm::vec3(planeTrans.getOrigin().getX(), planeTrans.getOrigin().getY(), planeTrans.getOrigin().getZ());
 	
 
 	if (cameraForward == true) {
@@ -488,7 +488,7 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 // tag::preRender[]
 void preRender()
 {
-	glViewport(0, 0, 600, 600); //set viewpoint
+	glViewport(0, 0, 1000, 1000); //set viewpoint
 	glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //set clear colour
 	glClear(GL_COLOR_BUFFER_BIT); //clear the window (technical the scissor box bounds)
 }
@@ -513,12 +513,12 @@ void render()
 
 
 	//set modelMatrix and draw for triangle 1
-	modelMatrix = glm::translate(glm::mat4(1.0f), position1);
+	modelMatrix = cube.GLmatrix;
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	//set modelMatrix and draw for triangle 2
-	modelMatrix = glm::translate(glm::mat4(1.0f), position2);
+	modelMatrix = place.GLmatrix;
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -560,7 +560,7 @@ int main(int argc, char* args[])
 
 	initGlew();
 
-	glViewport(0, 0, 600, 600); //should check what the actual window res is?
+	glViewport(0, 0, 1000, 1000); //should check what the actual window res is?
 
 	loadAssets();
 
@@ -570,6 +570,7 @@ int main(int argc, char* args[])
 	cube.shape->calculateLocalInertia(cube.mass, fall);
 	bWorld.dynamicsWorld->addRigidBody(cube.rigidBody);
 	//end bullet sim
+	cube.CreateVertexData();
 
 	while (!done) //loop until done flag is set)
 	{
