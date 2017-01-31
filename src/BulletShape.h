@@ -13,9 +13,9 @@ public:
 	std::vector<GLfloat> vertexData;
 	glm::mat4 GLmatrix;
 public:
-	BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass);
+	BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale);
 	~BulletShape();
 
-	void CreateVertexData();
-	void CreateBox();
+	void CreateVertexData(float vs);
+	void CreateBox(float vs);
 };

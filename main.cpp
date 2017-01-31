@@ -24,9 +24,9 @@ glm::mat4 modelMatrix;
 // Bullet vars
 BulletWorld bWorld = BulletWorld();
 btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 25, 0)), btScalar(0.5));
+BulletShape cube = BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 25, 0)), btScalar(0.5), 0.1f);
 btCollisionShape* btplane = new btStaticPlaneShape(btVector3(0, 1, 0), 0.1);
-BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0));
+BulletShape place = BulletShape(btplane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f);
 // end Bullet vars
 
 //our variables
@@ -570,7 +570,6 @@ int main(int argc, char* args[])
 	cube.shape->calculateLocalInertia(cube.mass, fall);
 	bWorld.dynamicsWorld->addRigidBody(cube.rigidBody);
 	//end bullet sim
-	cube.CreateVertexData();
 
 	while (!done) //loop until done flag is set)
 	{

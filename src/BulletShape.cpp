@@ -2,12 +2,13 @@
 
 
 
-BulletShape::BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass)
+BulletShape::BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale)
 {
 	shape = newShape;
 	motionState = new btDefaultMotionState(newTransform);
 	mass = newMass;
 	rigidBody = new btRigidBody(mass, motionState, shape, btVector3(0, 0, 0));
+	CreateVertexData(vertScale);
 }
 
 
@@ -18,16 +19,16 @@ BulletShape::~BulletShape()
 	delete shape;
 }
 
-void BulletShape::CreateVertexData()
+void BulletShape::CreateVertexData(float vs)
 {
-	if (shape->getName() == "btBoxShape")
+	std::string name = shape->getName();
+	if (name == "Box")
 	{
-		CreateBox();
+		CreateBox(vs);
 	}
 }
 
-void BulletShape::CreateBox()
+void BulletShape::CreateBox(float vs)
 {
-	float scale = shape->getLocalScaling().x;
-	std::cout << scale << std::endl;
+	//vertexData.push_back()
 }
