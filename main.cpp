@@ -34,6 +34,7 @@ BulletShape plane = BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), b
 //our variables
 bool done = false;
 
+// TODO: make this a dynamic construction to determine size
 // tag::vertexData[]
 //the data about our geometry
 const GLfloat vertexData[] = {
@@ -124,6 +125,7 @@ GLuint vertexArrayObject;
 // end Global Variables
 /////////////////////////
 
+// possible redo shaders to include lighting
 // tag::loadShader[]
 std::string loadShader(const string filePath) {
 	std::ifstream fileStream(filePath, std::ios::in | std::ios::binary);
@@ -331,6 +333,7 @@ void initializeProgram()
 }
 // end::initializeProgram[]
 
+// TODO: possible needs a dynamic runtime acces for better testing
 // tag::initializeVertexArrayObject[]
 //setup a GL object (a VertexArrayObject) that stores how to access data and from where
 void initializeVertexArrayObject()
@@ -384,6 +387,7 @@ void loadAssets()
 }
 // end::loadAssets[]
 
+// TODO: comtrols to move magnet for testing real time performance
 // tag::handleInput[]
 void handleInput()
 {
@@ -449,6 +453,7 @@ void handleInput()
 }
 // end::handleInput[]
 
+// TODO: reorganize this into a better structure to incoporate bullet
 // tag::updateSimulation[]
 void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
 {
@@ -463,6 +468,7 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 	planeTrans.getOpenGLMatrix(glm::value_ptr(magnet.GLmatrix));
 
 
+	//TODO: pull this out for readablitily
 	// first magnet attraction v1
 	if (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) <= 5.0f)
 	{
@@ -505,6 +511,7 @@ void preRender()
 
 // end::preRender[]
 
+// more dynamic render setup for multiple handling
 // tag::render[]
 void render()
 {
@@ -575,6 +582,7 @@ int main(int argc, char* args[])
 
 	loadAssets();
 
+	// this should be in a function somewhere
 	// bullet sim
 	btVector3 fall(0, 0, 0);
 	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
