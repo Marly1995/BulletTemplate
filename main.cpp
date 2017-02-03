@@ -387,6 +387,16 @@ void loadAssets()
 }
 // end::loadAssets[]
 
+void initPhysics()
+{
+	btVector3 fall(0, 0, 0);
+	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
+	magnet.shape->calculateLocalInertia(magnet.mass, fall);
+	bWorld.dynamicsWorld->addRigidBody(magnet.rigidBody);
+	cube.shape->calculateLocalInertia(cube.mass, fall);
+	bWorld.dynamicsWorld->addRigidBody(cube.rigidBody);
+	bWorld.dynamicsWorld->addRigidBody(plane.rigidBody);
+}
 // TODO: comtrols to move magnet for testing real time performance
 // tag::handleInput[]
 void handleInput()
@@ -453,9 +463,7 @@ void handleInput()
 }
 // end::handleInput[]
 
-// TODO: reorganize this into a better structure to incoporate bullet
-// tag::updateSimulation[]
-void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
+void physicsSimulation()
 {
 	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 1);
 
@@ -479,7 +487,11 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 		cube.rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (2 - sphereTrans.getOrigin().distance(planeTrans.getOrigin())));
 	}
 	//
-
+}
+// TODO: reorganize this into a better structure to incoporate bullet
+// tag::updateSimulation[]
+void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
+{
 	if (cameraForward == true) {
 		cameraPosition -= cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
 	}
@@ -582,20 +594,13 @@ int main(int argc, char* args[])
 
 	loadAssets();
 
-	// this should be in a function somewhere
-	// bullet sim
-	btVector3 fall(0, 0, 0);
-	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
-	magnet.shape->calculateLocalInertia(magnet.mass, fall);
-	bWorld.dynamicsWorld->addRigidBody(magnet.rigidBody);
-	cube.shape->calculateLocalInertia(cube.mass, fall);
-	bWorld.dynamicsWorld->addRigidBody(cube.rigidBody);
-	bWorld.dynamicsWorld->addRigidBody(plane.rigidBody);
-	//end bullet sim
+	initPhysics();
 
 	while (!done) //loop until done flag is set)
 	{
 		handleInput(); // this should ONLY SET VARIABLES
+
+		physicsSimulation();
 
 		updateSimulation(); // this should ONLY SET VARIABLES according to simulation
 
