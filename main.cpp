@@ -298,8 +298,8 @@ void initializeProgram()
 {
 	std::vector<GLuint> shaderList;
 
-	shaderList.push_back(createShader(GL_VERTEX_SHADER, loadShader("C:/Users/Computing/Documents/GitHub/BulletTemplate/vertexShader.glsl")));
-	shaderList.push_back(createShader(GL_FRAGMENT_SHADER, loadShader("C:/Users/Computing/Documents/GitHub/BulletTemplate/fragmentShader.glsl")));
+	shaderList.push_back(createShader(GL_VERTEX_SHADER, loadShader("../vertexShader.glsl")));
+	shaderList.push_back(createShader(GL_FRAGMENT_SHADER, loadShader("../fragmentShader.glsl")));
 
 	theProgram = createProgram(shaderList);
 	if (theProgram == 0)
