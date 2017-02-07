@@ -520,10 +520,9 @@ void preRender()
 	glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //set clear colour
 	glClear(GL_COLOR_BUFFER_BIT); //clear the window (technical the scissor box bounds)
 }
-
 // end::preRender[]
 
-// more dynamic render setup for multiple handling
+// TODO: more dynamic render setup for multiple handling
 // tag::render[]
 void render()
 {
