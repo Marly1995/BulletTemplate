@@ -11,7 +11,7 @@ BulletWorld::BulletWorld()
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 }
 
-
+// TODO: fix deletion of objects here
 BulletWorld::~BulletWorld()
 {
 	delete dynamicsWorld;
