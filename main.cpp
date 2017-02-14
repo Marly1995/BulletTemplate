@@ -80,12 +80,8 @@ const GLfloat vertexData[] = {
 // end::vertexData[]
 
 // tag::gameState[]
-//the translation vector we'll pass to our GLSL program
 glm::vec3 position1 = { 0.0f, 0.0f, 0.0f };
-glm::vec3 velocity1 = { 0.1f, 0.1f, 0.0f };
-
 glm::vec3 position2 = { 0.0f, 0.0f , 0.0f };
-glm::vec3 velocity2 = { -0.2f, 0.15f, 0.0f };
 
 GLfloat cameraSpeed = 0.05f;
 glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -15.0f);
@@ -332,14 +328,14 @@ void initializeProgram()
 // TODO: possible needs a dynamic runtime acces for better testing
 // tag::initializeVertexArrayObject[]
 //setup a GL object (a VertexArrayObject) that stores how to access data and from where
-void initializeVertexArrayObject()
+void initializeVertexArrayObject(BulletShape* shape)
 {
-	glGenVertexArrays(1, &vertexArrayObject); //create a Vertex Array Object
-	cout << "Vertex Array Object created OK! GLUint is: " << vertexArrayObject << std::endl;
+	glGenVertexArrays(1, &shape->arrayBuffer); //create a Vertex Array Object
+	cout << "Vertex Array Object created OK! GLUint is: " << shape->arrayBuffer << std::endl;
 
-	glBindVertexArray(vertexArrayObject); //make the just created vertexArrayObject the active one
+	glBindVertexArray(shape->arrayBuffer); //make the just created vertexArrayObject the active one
 
-	glBindBuffer(GL_ARRAY_BUFFER, vertexDataBufferObject); //bind vertexDataBufferObject
+	glBindBuffer(GL_ARRAY_BUFFER, shape->vertexBuffer); //bind vertexDataBufferObject
 
 	glEnableVertexAttribArray(positionLocation); //enable attribute at index positionLocation
 	//glEnableVertexAttribArray(vertexColorLocation); //enable attribute at index vertexColorLocation
@@ -359,16 +355,16 @@ void initializeVertexArrayObject()
 // end::initializeVertexArrayObject[]
 
 // tag::initializeVertexBuffer[]
-void initializeVertexBuffer()
+void initializeVertexBuffer(BulletShape* shape)
 {
-	glGenBuffers(1, &vertexDataBufferObject);
+	glGenBuffers(1, &shape->vertexBuffer);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vertexDataBufferObject);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, shape->vertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, shape->vertexData.size() * sizeof(GLfloat), &shape->vertexData.front(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	cout << "vertexDataBufferObject created OK! GLUint is: " << vertexDataBufferObject << std::endl;
+	cout << "vertexDataBufferObject created OK! GLUint is: " << shape->vertexBuffer << std::endl;
 
-	initializeVertexArrayObject();
+	initializeVertexArrayObject(shape);
 }
 // end::initializeVertexBuffer[]
 
@@ -377,7 +373,10 @@ void loadAssets()
 {
 	initializeProgram(); //create GLSL Shaders, link into a GLSL program, and get IDs of attributes and variables
 
-	initializeVertexBuffer(); //load data into a vertex buffer
+	for (int i = 0; i < shapes.size(); i++)
+	{
+		initializeVertexBuffer(shapes[i]); //load data into a vertex buffer
+	}
 
 	cout << "Loaded Assets OK!\n";
 }
@@ -388,19 +387,17 @@ void initPhysics()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(5, 15, 0)), btScalar(1), 0.1f);
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(5, 15, 0)), btScalar(1), 0.1f, shapes.size());
 	cube->shape->calculateLocalInertia(cube->mass, fall);
+	shapes.push_back(cube);
 
 	btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 1, 0)), btScalar(5), 0.1f);
+	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 1, 0)), btScalar(5), 0.1f, shapes.size());
 	magnet->shape->calculateLocalInertia(magnet->mass, fall);
+	shapes.push_back(magnet);
 
 	btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
-	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f);
-
-	// add all instanced shapes to storage
-	shapes.push_back(cube);
-	shapes.push_back(magnet);
+	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f, shapes.size());
 	shapes.push_back(plane);
 
 	// define gravity
@@ -609,9 +606,9 @@ int main(int argc, char* args[])
 
 	glViewport(0, 0, 1000, 1000); //should check what the actual window res is?
 
-	loadAssets();
-
 	initPhysics();
+
+	loadAssets();
 
 	while (!done) //loop until done flag is set)
 	{
