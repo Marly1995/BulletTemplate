@@ -387,23 +387,28 @@ void initPhysics()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(5, 15, 0)), btScalar(1), 0.1f, shapes.size());
-	cube->shape->calculateLocalInertia(cube->mass, fall);
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(4.5, 15, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube);
 
-	btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 1, 0)), btScalar(5), 0.1f, shapes.size());
-	magnet->shape->calculateLocalInertia(magnet->mass, fall);
+	BulletShape* cube1 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-4.5, 15, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
+	shapes.push_back(cube1);
+
+	BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 30, 2.5)), btScalar(1), 0.1f, shapes.size(), false, true);
+	shapes.push_back(cube2);
+
+	btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.2, 0.2, 0.2));
+	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 1, 0)), btScalar(5), 0.2f, shapes.size(), true, true);
 	shapes.push_back(magnet);
 
 	btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
-	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f, shapes.size());
+	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f, shapes.size(), false, false);
 	shapes.push_back(plane);
 
 	// define gravity
 	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
 	for (int i = 0; i < shapes.size(); i++)
 	{
+		shapes[i]->shape->calculateLocalInertia(shapes[i]->mass, fall);
 		bWorld.dynamicsWorld->addRigidBody(shapes[i]->rigidBody);
 	}	
 }
@@ -481,27 +486,23 @@ void magneticSimulation()
 void physicsSimulation()
 {
 	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 1);
-
-	btTransform sphereTrans;
-	btTransform planeTrans;
-	shapes[0]->rigidBody->getMotionState()->getWorldTransform(sphereTrans);
-	sphereTrans.getOpenGLMatrix(glm::value_ptr(shapes[0]->GLmatrix));
-	std::cout << "sphere height: " << sphereTrans.getOrigin().getY() << std::endl;
-	shapes[1]->rigidBody->getMotionState()->getWorldTransform(planeTrans);
-	planeTrans.getOpenGLMatrix(glm::value_ptr(shapes[1]->GLmatrix));
-
-
-	//TODO: pull this out for readablitily
-	// first magnet attraction v1
-	if (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) <= 5.0f)
+	for (int i = 0; i < shapes.size(); i++)
 	{
-		shapes[0]->rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (5 - sphereTrans.getOrigin().distance(planeTrans.getOrigin())));
+		btTransform shape;
+		shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(shapes[i]->GLmatrix));
+
+		for (int k = 0; k < shapes.size(); k++)
+		{
+			btTransform magnet;
+			shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
+			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
+			{
+				shapes[i]->rigidBody->applyCentralForce((magnet.getOrigin() - shape.getOrigin()) * (5 - shape.getOrigin().distance(magnet.getOrigin())));
+			}
+		}
 	}
-	if (sphereTrans.getOrigin().distance(planeTrans.getOrigin()) <= 2.0f)
-	{
-		shapes[0]->rigidBody->applyCentralForce((planeTrans.getOrigin() - sphereTrans.getOrigin()) * (2 - sphereTrans.getOrigin().distance(planeTrans.getOrigin())));
-	}
-	//
 }
 // TODO: reorganize this into a better structure to incoporate bullet
 // tag::updateSimulation[]
@@ -543,30 +544,28 @@ void render()
 {
 	glUseProgram(theProgram); //installs the program object specified by program as part of current rendering state
 
-	glBindVertexArray(vertexArrayObject);
+	for (int i = 0; i < shapes.size(); i++)
+	{
+		glBindVertexArray(shapes[i]->arrayBuffer);
 
-	glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
+		glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
 
-	glm::mat4 projection;
-	projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
-	//set projectionMatrix - how we go from 3D to 2D
-	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
+		glm::mat4 projection;
+		projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
+		//set projectionMatrix - how we go from 3D to 2D
+		glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
 
-	//set viewMatrix - how we control the view (viewpoint, view direction, etc)
-	glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
+		//set viewMatrix - how we control the view (viewpoint, view direction, etc)
+		glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
 
 
-	//set modelMatrix and draw for triangle 1
-	modelMatrix = shapes[0]->GLmatrix;
-	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+		//set modelMatrix and draw for triangle 1
+		modelMatrix = shapes[i]->GLmatrix;
+		glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
+		glDrawArrays(GL_TRIANGLES, 0, shapes[i]->vertexData.size() / 3);
 
-	//set modelMatrix and draw for triangle 2
-	modelMatrix = shapes[1]->GLmatrix;
-	glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-	glBindVertexArray(0);
+		glBindVertexArray(0);
+	}
 
 	glUseProgram(0); //clean up
 }

@@ -2,8 +2,10 @@
 
 
 
-BulletShape::BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale, int buffer)
+BulletShape::BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale, int buffer, bool isMagnet, bool isMetal)
 {
+	magnet = isMagnet;
+	metal = isMetal;
 	shape = newShape;
 	motionState = new btDefaultMotionState(newTransform);
 	mass = newMass;
@@ -27,6 +29,10 @@ void BulletShape::CreateVertexData(float vs)
 	if (name == "Box")
 	{
 		CreateBox(vs);
+	}
+	else if (name == "STATICPLANE")
+	{
+		CreatePlane();
 	}
 }
 
@@ -67,6 +73,17 @@ void BulletShape::CreateBox(float vs)
 	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
 	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
 
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
+}
+
+void BulletShape::CreatePlane()
+{
+	float vs = 0.0f;
 	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
 	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
 	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);

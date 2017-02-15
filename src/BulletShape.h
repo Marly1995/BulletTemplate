@@ -4,6 +4,7 @@
 class BulletShape
 {
 public:
+	// bullet physics data
 	btCollisionShape* shape;
 	btDefaultMotionState* motionState;
 	btScalar mass;
@@ -14,10 +15,15 @@ public:
 	GLuint arrayBuffer;
 	std::vector<GLfloat> vertexData;
 	glm::mat4 GLmatrix;
+
+	// magnet sim data
+	bool magnet;
+	bool metal;
 public:
-	BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale, int buffer);
+	BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale, int buffer, bool isMagnet, bool isMetal);
 	~BulletShape();
 
 	void CreateVertexData(float vs);
 	void CreateBox(float vs);
+	void CreatePlane();
 };
