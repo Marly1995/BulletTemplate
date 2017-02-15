@@ -82,7 +82,7 @@ const GLfloat vertexData[] = {
 
 // tag::gameState[]
 glm::vec3 lightColor = { 1.0f, 1.0f, 1.0f };
-glm::vec3 lightPosition = { 10.0f, 10.0f, 10.0f };
+glm::vec3 lightPosition = { 5.0f, 5.0f, 5.0f };
 
 GLfloat cameraSpeed = 0.05f;
 glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -15.0f);
@@ -106,7 +106,9 @@ GLuint theProgram; //GLuint that we'll fill in to refer to the GLSL program (onl
 GLint positionLocation; //GLuint that we'll fill in with the location of the `position` attribute in the GLSL
 GLint vertexColorLocation; //GLuint that we'll fill in with the location of the `vertexColor` attribute in the GLSL
 GLint colorLocation;
+GLint normalLocation;
 GLint lightColorLocation;
+GLint lightPositionLocation;
 
 						   //uniform location
 GLint modelMatrixLocation;
@@ -310,8 +312,10 @@ void initializeProgram()
 	// tag::glGetAttribLocation[]
 	positionLocation = glGetAttribLocation(theProgram, "position");
 	vertexColorLocation = glGetAttribLocation(theProgram, "vertexColor");
+	normalLocation = glGetAttribLocation(theProgram, "vertexColor");
 	colorLocation = glGetUniformLocation(theProgram, "color");
 	lightColorLocation = glGetUniformLocation(theProgram, "lightColor");
+	lightPositionLocation = glGetUniformLocation(theProgram, "lightPos");
 	// end::glGetAttribLocation[]
 
 	// tag::glGetUniformLocation[]
@@ -562,7 +566,7 @@ void render()
 	glDepthFunc(GL_LESS);
 
 	glUniform3f(lightColorLocation, lightColor[0], lightColor[1], lightColor[2]);
-
+	glUniform3f(lightPositionLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
 
 	glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
 
