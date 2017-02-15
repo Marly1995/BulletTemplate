@@ -546,7 +546,7 @@ void preRender()
 {
 	glViewport(0, 0, 1000, 1000); //set viewpoint
 	glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //set clear colour
-	glClear(GL_COLOR_BUFFER_BIT); //clear the window (technical the scissor box bounds)
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the window (technical the scissor box bounds)
 }
 // end::preRender[]
 
@@ -555,6 +555,10 @@ void preRender()
 void render()
 {
 	glUseProgram(theProgram); //installs the program object specified by program as part of current rendering state
+
+	glEnable(GL_DEPTH_TEST);
+
+	glDepthFunc(GL_LESS);
 
 	for (int i = 0; i < shapes.size(); i++)
 	{

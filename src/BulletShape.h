@@ -14,7 +14,7 @@ public:
 	GLuint vertexBuffer;
 	GLuint arrayBuffer;
 	GLuint textureBuffer;
-	GLfloat color[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+	GLfloat color[4];
 	std::vector<GLfloat> vertexData;
 	glm::mat4 GLmatrix;
 
@@ -26,6 +26,7 @@ public:
 	~BulletShape();
 
 	void CreateVertexData(float vs);
+	void PickColor(int col);
 	void CreateBox(float vs);
 	void CreatePlane();
 };
