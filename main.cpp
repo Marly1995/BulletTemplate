@@ -104,6 +104,7 @@ GLuint theProgram; //GLuint that we'll fill in to refer to the GLSL program (onl
 				   //attribute locations
 GLint positionLocation; //GLuint that we'll fill in with the location of the `position` attribute in the GLSL
 GLint vertexColorLocation; //GLuint that we'll fill in with the location of the `vertexColor` attribute in the GLSL
+GLint colorLocation;
 
 						   //uniform location
 GLint modelMatrixLocation;
@@ -307,6 +308,7 @@ void initializeProgram()
 	// tag::glGetAttribLocation[]
 	positionLocation = glGetAttribLocation(theProgram, "position");
 	vertexColorLocation = glGetAttribLocation(theProgram, "vertexColor");
+	colorLocation = glGetUniformLocation(theProgram, "color");
 	// end::glGetAttribLocation[]
 
 	// tag::glGetUniformLocation[]
@@ -325,32 +327,38 @@ void initializeProgram()
 }
 // end::initializeProgram[]
 
+// only for textured objects
+void initializeVertexObjectColor(BulletShape* shape)
+{
+	glBindVertexArray(shape->arrayBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, shape->textureBuffer);
+	glEnableVertexAttribArray(vertexColorLocation);
+	glVertexAttribPointer(vertexColorLocation, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindVertexArray(0);
+
+	glDisableVertexAttribArray(vertexColorLocation);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 // TODO: possible needs a dynamic runtime acces for better testing
 // tag::initializeVertexArrayObject[]
 //setup a GL object (a VertexArrayObject) that stores how to access data and from where
 void initializeVertexArrayObject(BulletShape* shape)
 {
 	glGenVertexArrays(1, &shape->arrayBuffer); //create a Vertex Array Object
-	cout << "Vertex Array Object created OK! GLUint is: " << shape->arrayBuffer << std::endl;
+	// cout << "Vertex Array Object created OK! GLUint is: " << shape->arrayBuffer << std::endl;
 
 	glBindVertexArray(shape->arrayBuffer); //make the just created vertexArrayObject the active one
-
 	glBindBuffer(GL_ARRAY_BUFFER, shape->vertexBuffer); //bind vertexDataBufferObject
-
 	glEnableVertexAttribArray(positionLocation); //enable attribute at index positionLocation
-	//glEnableVertexAttribArray(vertexColorLocation); //enable attribute at index vertexColorLocation
-
-													// tag::glVertexAttribPointer[]
 	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, 0); //specify that position data contains four floats per vertex, and goes into attribute index positionLocation
-//	glVertexAttribPointer(vertexColorLocation, 4, GL_FLOAT, GL_FALSE, (7 * sizeof(GL_FLOAT)), (GLvoid *)(3 * sizeof(GLfloat))); //specify that position data contains four floats per vertex, and goes into attribute index vertexColorLocation
-																																// end::glVertexAttribPointer[]
-
 	glBindVertexArray(0); //unbind the vertexArrayObject so we can't change it
 
-						  //cleanup
+	//cleanup
 	glDisableVertexAttribArray(positionLocation); //disable vertex attribute at index positionLocation
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind array buffer
 
+	initializeVertexObjectColor(shape);
 }
 // end::initializeVertexArrayObject[]
 
@@ -358,11 +366,15 @@ void initializeVertexArrayObject(BulletShape* shape)
 void initializeVertexBuffer(BulletShape* shape)
 {
 	glGenBuffers(1, &shape->vertexBuffer);
+	glGenBuffers(1, &shape->textureBuffer);
 
 	glBindBuffer(GL_ARRAY_BUFFER, shape->vertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, shape->vertexData.size() * sizeof(GLfloat), &shape->vertexData.front(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	cout << "vertexDataBufferObject created OK! GLUint is: " << shape->vertexBuffer << std::endl;
+	glBindBuffer(GL_ARRAY_BUFFER, shape->textureBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(shape->color), shape->color, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// cout << "vertexDataBufferObject created OK! GLUint is: " << shape->vertexBuffer << std::endl;
 
 	initializeVertexArrayObject(shape);
 }
@@ -397,7 +409,7 @@ void initPhysics()
 	shapes.push_back(cube2);
 
 	btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.2, 0.2, 0.2));
-	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 1, 0)), btScalar(5), 0.2f, shapes.size(), true, true);
+	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 1, 0)), btScalar(50), 0.2f, shapes.size(), true, true);
 	shapes.push_back(magnet);
 
 	btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
@@ -547,6 +559,8 @@ void render()
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		glBindVertexArray(shapes[i]->arrayBuffer);
+
+		glUniform4f(colorLocation, shapes[i]->color[0], shapes[i]->color[1], shapes[i]->color[2], shapes[i]->color[3]);
 
 		glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
 

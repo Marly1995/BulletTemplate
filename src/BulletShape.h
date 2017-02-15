@@ -13,6 +13,8 @@ public:
 	// opengl rendering data
 	GLuint vertexBuffer;
 	GLuint arrayBuffer;
+	GLuint textureBuffer;
+	GLfloat color[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
 	std::vector<GLfloat> vertexData;
 	glm::mat4 GLmatrix;
 
