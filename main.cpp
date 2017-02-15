@@ -20,6 +20,7 @@ int frameCount = 0;
 std::string frameLine = "";
 // end::globalVariables[]
 glm::mat4 modelMatrix;
+glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
 
 // object holders
 std::vector <BulletShape*> shapes;
@@ -80,8 +81,8 @@ const GLfloat vertexData[] = {
 // end::vertexData[]
 
 // tag::gameState[]
-glm::vec3 position1 = { 0.0f, 0.0f, 0.0f };
-glm::vec3 position2 = { 0.0f, 0.0f , 0.0f };
+glm::vec3 lightColor = { 1.0f, 1.0f, 1.0f };
+glm::vec3 lightPosition = { 10.0f, 10.0f, 10.0f };
 
 GLfloat cameraSpeed = 0.05f;
 glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -15.0f);
@@ -105,6 +106,7 @@ GLuint theProgram; //GLuint that we'll fill in to refer to the GLSL program (onl
 GLint positionLocation; //GLuint that we'll fill in with the location of the `position` attribute in the GLSL
 GLint vertexColorLocation; //GLuint that we'll fill in with the location of the `vertexColor` attribute in the GLSL
 GLint colorLocation;
+GLint lightColorLocation;
 
 						   //uniform location
 GLint modelMatrixLocation;
@@ -309,6 +311,7 @@ void initializeProgram()
 	positionLocation = glGetAttribLocation(theProgram, "position");
 	vertexColorLocation = glGetAttribLocation(theProgram, "vertexColor");
 	colorLocation = glGetUniformLocation(theProgram, "color");
+	lightColorLocation = glGetUniformLocation(theProgram, "lightColor");
 	// end::glGetAttribLocation[]
 
 	// tag::glGetUniformLocation[]
@@ -555,27 +558,23 @@ void preRender()
 void render()
 {
 	glUseProgram(theProgram); //installs the program object specified by program as part of current rendering state
-
 	glEnable(GL_DEPTH_TEST);
-
 	glDepthFunc(GL_LESS);
+
+	glUniform3f(lightColorLocation, lightColor[0], lightColor[1], lightColor[2]);
+
+
+	glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
+
+	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
+
+	glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
 
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		glBindVertexArray(shapes[i]->arrayBuffer);
 
 		glUniform4f(colorLocation, shapes[i]->color[0], shapes[i]->color[1], shapes[i]->color[2], shapes[i]->color[3]);
-
-		glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
-
-		glm::mat4 projection;
-		projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
-		//set projectionMatrix - how we go from 3D to 2D
-		glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
-
-		//set viewMatrix - how we control the view (viewpoint, view direction, etc)
-		glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
-
 
 		//set modelMatrix and draw for triangle 1
 		modelMatrix = shapes[i]->GLmatrix;
