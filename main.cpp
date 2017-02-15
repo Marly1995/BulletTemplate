@@ -312,7 +312,7 @@ void initializeProgram()
 	// tag::glGetAttribLocation[]
 	positionLocation = glGetAttribLocation(theProgram, "position");
 	vertexColorLocation = glGetAttribLocation(theProgram, "vertexColor");
-	normalLocation = glGetAttribLocation(theProgram, "vertexColor");
+	normalLocation = glGetAttribLocation(theProgram, "normal");
 	colorLocation = glGetUniformLocation(theProgram, "color");
 	lightColorLocation = glGetUniformLocation(theProgram, "lightColor");
 	lightPositionLocation = glGetUniformLocation(theProgram, "lightPos");
@@ -358,11 +358,14 @@ void initializeVertexArrayObject(BulletShape* shape)
 	glBindVertexArray(shape->arrayBuffer); //make the just created vertexArrayObject the active one
 	glBindBuffer(GL_ARRAY_BUFFER, shape->vertexBuffer); //bind vertexDataBufferObject
 	glEnableVertexAttribArray(positionLocation); //enable attribute at index positionLocation
-	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, 0); //specify that position data contains four floats per vertex, and goes into attribute index positionLocation
+	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(normalLocation); //enable attribute at index positionLocation
+	glVertexAttribPointer(normalLocation, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glBindVertexArray(0); //unbind the vertexArrayObject so we can't change it
 
 	//cleanup
 	glDisableVertexAttribArray(positionLocation); //disable vertex attribute at index positionLocation
+	glDisableVertexAttribArray(normalLocation);
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind array buffer
 
 	initializeVertexObjectColor(shape);
@@ -583,7 +586,7 @@ void render()
 		//set modelMatrix and draw for triangle 1
 		modelMatrix = shapes[i]->GLmatrix;
 		glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-		glDrawArrays(GL_TRIANGLES, 0, shapes[i]->vertexData.size() / 3);
+		glDrawArrays(GL_TRIANGLES, 0, shapes[i]->vertexData.size() / 6);
 
 		glBindVertexArray(0);
 	}

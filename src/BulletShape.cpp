@@ -59,56 +59,57 @@ void BulletShape::CreateVertexData(float vs)
 
 void BulletShape::CreateBox(float vs)
 {
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
+	//							VERTEX DATA																NORMAL DATA
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);
 
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(1.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(1.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(1.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(1.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(1.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(0.0f);	vertexData.push_back(1.0f);
 
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
 
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(1.0f);	vertexData.push_back(0.0f);	vertexData.push_back(0.0f);
 
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(-vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(-1.0f);	vertexData.push_back(0.0f);
 
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(vs);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
 }
 
 void BulletShape::CreatePlane()
 {
 	float vs = 10.0f;
-	vertexData.push_back(-vs);	vertexData.push_back(1);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(1);	vertexData.push_back(-vs);
-	vertexData.push_back(vs);	vertexData.push_back(1);	vertexData.push_back(vs);
-	vertexData.push_back(vs);	vertexData.push_back(1);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(1);	vertexData.push_back(vs);
-	vertexData.push_back(-vs);	vertexData.push_back(1);	vertexData.push_back(-vs);
+	vertexData.push_back(-vs);	vertexData.push_back(1);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(1);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(1);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(vs);	vertexData.push_back(1);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(1);	vertexData.push_back(vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
+	vertexData.push_back(-vs);	vertexData.push_back(1);	vertexData.push_back(-vs);		vertexData.push_back(0.0f);	vertexData.push_back(1.0f);	vertexData.push_back(0.0f);
 }
