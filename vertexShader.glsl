@@ -15,7 +15,7 @@ void main()
 		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
 		FragmentColor = vertexColor;
 		
-		Normal = normal;
+		Normal = mat3(transpose(inverse(modelMatrix))) * normal;
 		FragmentPos = vec3(modelMatrix * vec4(position, 1.0));
 		
 }

@@ -31,63 +31,16 @@ BulletWorld bWorld = BulletWorld();
 //our variables
 bool done = false;
 
-// TODO: make this a dynamic construction to determine size
-// tag::vertexData[]
-//the data about our geometry
-const GLfloat vertexData[] = {
-	//	 X        Y            Z          R     G     B      A
-	-0.1f, -0.1f, -0.1f,
-	0.1f, -0.1f, -0.1f,
-	0.1f,  0.1f, -0.1f,
-	0.1f,  0.1f, -0.1f,
-	-0.1f,  0.1f, -0.1f,
-	-0.1f, -0.1f, -0.1f,
-
-	-0.1f, -0.1f,  0.1f,
-	0.1f, -0.1f,  0.1f,
-	0.1f,  0.1f,  0.1f,
-	0.1f,  0.1f,  0.1f,
-	-0.1f,  0.1f,  0.1f,
-	-0.1f, -0.1f,  0.1f,
-
-	-0.1f,  0.1f,  0.1f,
-	-0.1f,  0.1f, -0.1f,
-	-0.1f, -0.1f, -0.1f,
-	-0.1f, -0.1f, -0.1f,
-	-0.1f, -0.1f,  0.1f,
-	-0.1f,  0.1f,  0.1f,
-
-	0.1f,  0.1f,  0.1f,
-	0.1f,  0.1f, -0.1f,
-	0.1f, -0.1f, -0.1f,
-	0.1f, -0.1f, -0.1f,
-	0.1f, -0.1f,  0.1f,
-	0.1f,  0.1f,  0.1f,
-
-	-0.1f, -0.1f, -0.1f,
-	0.1f, -0.1f, -0.1f,
-	0.1f, -0.1f,  0.1f,
-	0.1f, -0.1f,  0.1f,
-	-0.1f, -0.1f,  0.1f,
-	-0.1f, -0.1f, -0.1f,
-
-	-0.1f,  0.1f, -0.1f,
-	0.1f,  0.1f, -0.1f,
-	0.1f,  0.1f,  0.1f,
-	0.1f,  0.1f,  0.1f,
-	-0.1f,  0.1f,  0.1f,
-	-0.1f,  0.1f, -0.1f
-};
-// end::vertexData[]
-
 // tag::gameState[]
 glm::vec3 lightColor = { 1.0f, 1.0f, 1.0f };
-glm::vec3 lightPosition = { 5.0f, 5.0f, 5.0f };
+glm::vec3 lightPosition = { 2.0f, 2.0f, 1.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, -15.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+GLfloat pitch, yaw;
 
 bool cameraForward = false;
 bool cameraBackward = false;
@@ -95,6 +48,8 @@ bool cameraLeft = false;
 bool cameraRight = false;
 bool cameraRotUp = false;
 bool cameraRotDown = false;
+
+int mouseX, mouseY, mouseLastX, mouseLastY;
 // end::gameState[]
 
 // tag::GLVariables[]
@@ -109,6 +64,7 @@ GLint colorLocation;
 GLint normalLocation;
 GLint lightColorLocation;
 GLint lightPositionLocation;
+GLint cameraPositionLocation;
 
 						   //uniform location
 GLint modelMatrixLocation;
@@ -316,6 +272,7 @@ void initializeProgram()
 	colorLocation = glGetUniformLocation(theProgram, "color");
 	lightColorLocation = glGetUniformLocation(theProgram, "lightColor");
 	lightPositionLocation = glGetUniformLocation(theProgram, "lightPos");
+	cameraPositionLocation = glGetUniformLocation(theProgram, "cameraPos");
 	// end::glGetAttribLocation[]
 
 	// tag::glGetUniformLocation[]
@@ -458,18 +415,18 @@ void handleInput()
 				case SDLK_ESCAPE: done = true;
 					break;
 
-				case SDLK_UP: cameraForward = true;
+				case SDLK_w: cameraForward = true;
 					break;
-				case SDLK_DOWN: cameraBackward = true;
+				case SDLK_s: cameraBackward = true;
 					break;
-				case SDLK_LEFT: cameraLeft = true;
+				case SDLK_a: cameraLeft = true;
 					break;
-				case SDLK_RIGHT: cameraRight = true;
+				case SDLK_d: cameraRight = true;
 					break;
-				case SDLK_a: cameraRotUp = true;
+				/*case SDLK_a: cameraRotUp = true;
 					break;
 				case SDLK_d: cameraRotDown = true;
-					break;
+					break;*/
 				case SDLK_SPACE: cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
 					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 					cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -482,19 +439,22 @@ void handleInput()
 			if (event.key.repeat)
 				switch (event.key.keysym.sym)
 				{
-				case SDLK_UP: cameraForward = false;
+				case SDLK_w: cameraForward = false;
 					break;
-				case SDLK_DOWN: cameraBackward = false;
+				case SDLK_s: cameraBackward = false;
 					break;
-				case SDLK_LEFT: cameraLeft = false;
+				case SDLK_a: cameraLeft = false;
 					break;
-				case SDLK_RIGHT: cameraRight = false;
+				case SDLK_d: cameraRight = false;
 					break;
-				case SDLK_a: cameraRotUp = false;
+				/*case SDLK_a: cameraRotUp = false;
 					break;
 				case SDLK_d: cameraRotDown = false;
-					break;
+					break;*/
 				}
+
+		case SDL_MOUSEMOTION:
+			SDL_GetMouseState( &mouseX, &mouseY);
 		}
 	}
 }
@@ -530,11 +490,12 @@ void physicsSimulation()
 // tag::updateSimulation[]
 void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
 {
+	cameraSpeed = 2.0f * simLength;
 	if (cameraForward == true) {
-		cameraPosition -= cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
+		cameraPosition += cameraSpeed * cameraFront;
 	}
 	if (cameraBackward == true) {
-		cameraPosition += cameraSpeed * glm::vec3(0.0f, 0.0f, -1.0f);
+		cameraPosition -= cameraSpeed * cameraFront;
 	}
 	if (cameraLeft == true) {
 		cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
@@ -542,12 +503,29 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 	if (cameraRight == true) {
 		cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	}
-	if (cameraRotUp == true) {
-		cameraPosition += glm::normalize(glm::cross(cameraFront, glm::vec3(1.0f, 0.0f, 0.0f))) * cameraSpeed;
-	}
-	if (cameraRotDown == true) {
-		cameraPosition -= glm::normalize(glm::cross(cameraFront, glm::vec3(1.0f, 0.0f, 0.0f))) * cameraSpeed;
-	}
+
+	GLfloat xOffset = mouseX - mouseLastX;
+	GLfloat yOffset = mouseY - mouseLastY;
+	mouseLastX = mouseX;
+	mouseLastY = mouseY;
+
+	GLfloat sensitivity = 0.05f;;
+	xOffset *= sensitivity;
+	yOffset *= sensitivity;
+
+	yaw += xOffset;
+	pitch += yOffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+	front.y = sin(glm::radians(-pitch));
+	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+	cameraFront = glm::normalize(front);
 }
 // end::updateSimulation[]
 
@@ -568,10 +546,11 @@ void render()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
+	glUniform3f(cameraPositionLocation, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
 	glUniform3f(lightColorLocation, lightColor[0], lightColor[1], lightColor[2]);
 	glUniform3f(lightPositionLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
 
-	glm::mat4 view = glm::lookAt(cameraPosition, cameraFront, cameraUp);
+	glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
 
 	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
 
@@ -632,6 +611,8 @@ int main(int argc, char* args[])
 	initPhysics();
 
 	loadAssets();
+
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	while (!done) //loop until done flag is set)
 	{
