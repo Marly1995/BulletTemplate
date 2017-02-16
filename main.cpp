@@ -454,7 +454,8 @@ void handleInput()
 				}
 
 		case SDL_MOUSEMOTION:
-			SDL_GetMouseState( &mouseX, &mouseY);
+			SDL_GetRelativeMouseState( &mouseX, &mouseY);
+			SDL_WarpMouseInWindow(win, 500, 500);
 		}
 	}
 }
@@ -504,10 +505,33 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 		cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	}
 
-	GLfloat xOffset = mouseX - mouseLastX;
-	GLfloat yOffset = mouseY - mouseLastY;
+	GLfloat xOffset = mouseX;// -mouseLastX;
+	GLfloat yOffset = mouseY;// -mouseLastY;
 	mouseLastX = mouseX;
 	mouseLastY = mouseY;
+
+	//if (mouseX >= 900)
+	//{
+	//	SDL_WarpMouseInWindow(win, 500, mouseY);
+	//	mouseLastX = 500;
+	//}
+	//if (mouseY >= 900)
+	//{
+	//	SDL_WarpMouseInWindow(win, mouseX, 500);
+	//	mouseLastY = 500;
+	//}
+	//if (mouseX <= 100)
+	//{
+	//	SDL_WarpMouseInWindow(win, 500, mouseY);
+	//	mouseLastX = 500;
+	//}
+	//if (mouseY <= 100)
+	//{
+	//	SDL_WarpMouseInWindow(win, mouseX, 500);
+	//	mouseLastY = 500;
+	//}
+
+	cout << mouseX << endl;
 
 	GLfloat sensitivity = 0.05f;;
 	xOffset *= sensitivity;
@@ -578,9 +602,9 @@ void render()
 void postRender()
 {
 	SDL_GL_SwapWindow(win);; //present the frame buffer to the display (swapBuffers)
-	frameLine += "Frame: " + std::to_string(frameCount++);
-	cout << "\r" << frameLine << std::flush;
-	frameLine = "";
+	//frameLine += "Frame: " + std::to_string(frameCount++);
+	//cout << "\r" << frameLine << std::flush;
+	//frameLine = "";
 }
 // end::postRender[]
 
@@ -612,7 +636,7 @@ int main(int argc, char* args[])
 
 	loadAssets();
 
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_CaptureMouse(SDL_TRUE);
 
 	while (!done) //loop until done flag is set)
 	{
