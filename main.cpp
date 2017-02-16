@@ -18,6 +18,12 @@ SDL_Window *win; //pointer to the SDL_Window
 SDL_GLContext context; //the SDL_GLContext
 int frameCount = 0;
 std::string frameLine = "";
+double frameTime = 0;
+double lastTime = 0;
+double currentTime = 0;
+double deltaTime = 0.01;
+double accumulator = 0;
+double time = 0;
 // end::globalVariables[]
 glm::mat4 modelMatrix;
 glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
@@ -38,7 +44,7 @@ glm::vec3 lightPosition = { 2.0f, 2.0f, 1.0f };
 GLfloat cameraSpeed = 0.05f;
 glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 GLfloat pitch, yaw;
 
@@ -46,10 +52,12 @@ bool cameraForward = false;
 bool cameraBackward = false;
 bool cameraLeft = false;
 bool cameraRight = false;
-bool cameraRotUp = false;
-bool cameraRotDown = false;
+bool cameraUp = false;
+bool cameraDown = false;
 
 int mouseX, mouseY, mouseLastX, mouseLastY;
+GLfloat xOffset;
+GLfloat yOffset;
 // end::gameState[]
 
 // tag::GLVariables[]
@@ -403,7 +411,7 @@ void handleInput()
 		{
 		case SDL_QUIT:
 			done = true;
-						
+
 			break;
 
 			//keydown handling - we should to the opposite on key-up for direction controls (generally)
@@ -423,13 +431,13 @@ void handleInput()
 					break;
 				case SDLK_d: cameraRight = true;
 					break;
-				/*case SDLK_a: cameraRotUp = true;
-					break;
-				case SDLK_d: cameraRotDown = true;
-					break;*/
+					case SDLK_q: cameraUp = true;
+						break;
+					case SDLK_e: cameraDown = true;
+						break;
 				case SDLK_SPACE: cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
 					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-					cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+					cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
 					break;
 				}
 			break;
@@ -447,16 +455,16 @@ void handleInput()
 					break;
 				case SDLK_d: cameraRight = false;
 					break;
-				/*case SDLK_a: cameraRotUp = false;
-					break;
-				case SDLK_d: cameraRotDown = false;
-					break;*/
+					case SDLK_q: cameraUp = false;
+						break;
+					case SDLK_e: cameraDown = false;
+						break;
 				}
 
 		case SDL_MOUSEMOTION:
-			SDL_GetRelativeMouseState( &mouseX, &mouseY);
-			SDL_WarpMouseInWindow(win, 500, 500);
+			break;
 		}
+	
 	}
 }
 // end::handleInput[]
@@ -466,9 +474,9 @@ void magneticSimulation()
 
 }
 
-void physicsSimulation()
+void physicsSimulation(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(1 / 60.f, 1);
+	bWorld.dynamicsWorld->stepSimulation(0.01, 1);
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		btTransform shape;
@@ -489,9 +497,9 @@ void physicsSimulation()
 }
 // TODO: reorganize this into a better structure to incoporate bullet
 // tag::updateSimulation[]
-void updateSimulation(double simLength = 0.02) //update simulation with an amount of time to simulate for (in seconds)
+void updateSimulation(double simTime) //update simulation with an amount of time to simulate for (in seconds)
 {
-	cameraSpeed = 2.0f * simLength;
+	cameraSpeed = 2.0f * simTime;
 	if (cameraForward == true) {
 		cameraPosition += cameraSpeed * cameraFront;
 	}
@@ -499,43 +507,30 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 		cameraPosition -= cameraSpeed * cameraFront;
 	}
 	if (cameraLeft == true) {
-		cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraViewUp)) * cameraSpeed;
 	}
 	if (cameraRight == true) {
-		cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		cameraPosition += glm::normalize(glm::cross(cameraFront, cameraViewUp)) * cameraSpeed;
+	}
+	if (cameraUp == true) {
+		cameraPosition[1] += cameraSpeed;
+	}
+	if (cameraDown == true) {
+		cameraPosition[1] -= cameraSpeed;
 	}
 
-	GLfloat xOffset = mouseX;// -mouseLastX;
-	GLfloat yOffset = mouseY;// -mouseLastY;
+	SDL_GetMouseState(&mouseX, &mouseY);
+	SDL_WarpMouseInWindow(win, 500, 500);
+	xOffset = mouseX - 500;
+	yOffset = mouseY - 500;
 	mouseLastX = mouseX;
 	mouseLastY = mouseY;
-
-	//if (mouseX >= 900)
-	//{
-	//	SDL_WarpMouseInWindow(win, 500, mouseY);
-	//	mouseLastX = 500;
-	//}
-	//if (mouseY >= 900)
-	//{
-	//	SDL_WarpMouseInWindow(win, mouseX, 500);
-	//	mouseLastY = 500;
-	//}
-	//if (mouseX <= 100)
-	//{
-	//	SDL_WarpMouseInWindow(win, 500, mouseY);
-	//	mouseLastX = 500;
-	//}
-	//if (mouseY <= 100)
-	//{
-	//	SDL_WarpMouseInWindow(win, mouseX, 500);
-	//	mouseLastY = 500;
-	//}
-
-	cout << mouseX << endl;
+	cout << xOffset << endl;
 
 	GLfloat sensitivity = 0.05f;;
 	xOffset *= sensitivity;
 	yOffset *= sensitivity;
+	
 
 	yaw += xOffset;
 	pitch += yOffset;
@@ -557,7 +552,7 @@ void updateSimulation(double simLength = 0.02) //update simulation with an amoun
 void preRender()
 {
 	glViewport(0, 0, 1000, 1000); //set viewpoint
-	glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //set clear colour
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //set clear colour
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the window (technical the scissor box bounds)
 }
 // end::preRender[]
@@ -574,7 +569,7 @@ void render()
 	glUniform3f(lightColorLocation, lightColor[0], lightColor[1], lightColor[2]);
 	glUniform3f(lightPositionLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
 
-	glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
+	glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraViewUp);
 
 	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
 
@@ -637,14 +632,29 @@ int main(int argc, char* args[])
 	loadAssets();
 
 	SDL_CaptureMouse(SDL_TRUE);
+	SDL_ShowCursor(SDL_DISABLE);
 
 	while (!done) //loop until done flag is set)
 	{
 		handleInput(); // this should ONLY SET VARIABLES
 
-		physicsSimulation();
+		lastTime = currentTime;
+		currentTime = SDL_GetTicks();
+		frameTime = (currentTime - lastTime) /1000;
+		if (frameTime > 0.25)
+			frameTime = 0.25;
 
-		updateSimulation(); // this should ONLY SET VARIABLES according to simulation
+		accumulator += frameTime;
+
+		while (accumulator >= deltaTime)
+		{
+			accumulator -= deltaTime;
+			time += deltaTime;
+
+			physicsSimulation(deltaTime);
+
+			updateSimulation(deltaTime);
+		}
 
 		preRender();
 
