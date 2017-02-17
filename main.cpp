@@ -21,7 +21,7 @@ std::string frameLine = "";
 double frameTime = 0;
 double lastTime = 0;
 double currentTime = 0;
-double deltaTime = 0.01;
+double deltaTime = 0.1;
 double accumulator = 0;
 double time = 0;
 // end::globalVariables[]
@@ -469,6 +469,12 @@ void handleInput()
 }
 // end::handleInput[]
 
+float lorentzForce(float q, float e, float v, float b)
+{
+	float lf = q*(e + (v * b));
+		return lf;
+}
+
 void magneticSimulation()
 {
 
@@ -476,7 +482,7 @@ void magneticSimulation()
 
 void physicsSimulation(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(0.01, 1);
+	bWorld.dynamicsWorld->stepSimulation(simTime, 1);
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		btTransform shape;
@@ -490,7 +496,7 @@ void physicsSimulation(double simTime)
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
 			{
-				shapes[i]->rigidBody->applyCentralForce((magnet.getOrigin() - shape.getOrigin()) * (5 - shape.getOrigin().distance(magnet.getOrigin())));
+				shapes[i]->rigidBody->applyCentralForce(simTime * ((magnet.getOrigin() - shape.getOrigin()) * lorentzForce(5, 250, shapes[i]->rigidBody->getLinearVelocity().length(), 0.1)));
 			}
 		}
 	}
@@ -525,7 +531,6 @@ void updateSimulation(double simTime) //update simulation with an amount of time
 	yOffset = mouseY - 500;
 	mouseLastX = mouseX;
 	mouseLastY = mouseY;
-	cout << xOffset << endl;
 
 	GLfloat sensitivity = 0.05f;;
 	xOffset *= sensitivity;
@@ -597,9 +602,9 @@ void render()
 void postRender()
 {
 	SDL_GL_SwapWindow(win);; //present the frame buffer to the display (swapBuffers)
-	//frameLine += "Frame: " + std::to_string(frameCount++);
-	//cout << "\r" << frameLine << std::flush;
-	//frameLine = "";
+	frameLine += "Frame: " + std::to_string(frameCount++);
+	cout << "\r" << frameLine << std::flush;
+	frameLine = "";
 }
 // end::postRender[]
 
