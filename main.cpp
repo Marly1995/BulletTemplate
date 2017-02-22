@@ -21,7 +21,7 @@ std::string frameLine = "";
 double frameTime = 0;
 double lastTime = 0;
 double currentTime = 0;
-double deltaTime = 0.1;
+double deltaTime = 0.01;
 double accumulator = 0;
 double time = 0;
 // end::globalVariables[]
@@ -392,7 +392,7 @@ void initPhysics()
 	shapes.push_back(plane);
 
 	// define gravity
-	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -1.0f, 0.0f));
+	bWorld.dynamicsWorld->setGravity(btVector3(0.0f, -9.81f, 0.0f));
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		shapes[i]->shape->calculateLocalInertia(shapes[i]->mass, fall);
@@ -475,9 +475,70 @@ float lorentzForce(float q, float e, float v, float b)
 		return lf;
 }
 
-void magneticSimulation()
+btVector3 magnetPoint(int point, btVector3 position, float extent)
 {
+	switch(point)
+	{
+	case 0:
+		position += btVector3(extent, extent, extent);
+		break;
+	case 1:
+		position += btVector3(-extent, extent, extent);
+		break;
+	case 2:
+		position += btVector3(extent, extent, -extent);
+		break;
+	case 3:
+		position += btVector3(-extent, extent, -extent);
+		break;
+	case 4:
+		position += btVector3(extent, -extent, extent);
+		break;
+	case 5:
+		position += btVector3(-extent, -extent, extent);
+		break;
+	case 6:
+		position += btVector3(extent, -extent, -extent);
+		break;
+	case 7:
+		position += btVector3(-extent, -extent, -extent);
+		break;
 
+	}
+	return position;
+}
+
+void magneticSimulation(double simTime)
+{
+	bWorld.dynamicsWorld->stepSimulation(simTime, 1);
+	for (int i = 0; i < shapes.size(); i++)
+	{
+		btTransform shape;
+		shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(shapes[i]->GLmatrix));
+
+		for (int k = 0; k < shapes.size(); k++)
+		{
+			btTransform magnet;
+			shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
+			else 
+			{
+				for (int p = 0; p < 8; p++)
+				{
+					btVector3 force = btVector3(0.0f, 0.0f, 0.0f);
+					magnet.setOrigin(magnetPoint(p, shape.getOrigin(), shapes[k]->vertExtent));	
+					if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && shapes[k])
+					{
+						force += (simTime * (magnet.getOrigin() - shape.getOrigin()));//lorentzForce(5, 250, shapes[i]->rigidBody->getLinearVelocity().length(), 0.1)));
+						cout << force.x() << "  " << force.y() << "  " << force.z() << "  " << endl;
+					}
+					shapes[i]->rigidBody->applyCentralForce(force);
+					
+				}
+			}
+		}
+	}
 }
 
 void physicsSimulation(double simTime)
@@ -602,9 +663,9 @@ void render()
 void postRender()
 {
 	SDL_GL_SwapWindow(win);; //present the frame buffer to the display (swapBuffers)
-	frameLine += "Frame: " + std::to_string(frameCount++);
+	/*frameLine += "Frame: " + std::to_string(frameCount++);
 	cout << "\r" << frameLine << std::flush;
-	frameLine = "";
+	frameLine = "";*/
 }
 // end::postRender[]
 
@@ -656,7 +717,8 @@ int main(int argc, char* args[])
 			accumulator -= deltaTime;
 			time += deltaTime;
 
-			physicsSimulation(deltaTime);
+			//physicsSimulation(deltaTime);
+			magneticSimulation(deltaTime);
 
 			updateSimulation(deltaTime);
 		}

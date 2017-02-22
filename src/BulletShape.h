@@ -21,6 +21,7 @@ public:
 	// magnet sim data
 	bool magnet;
 	bool metal;
+	float vertExtent;
 public:
 	BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale, int buffer, bool isMagnet, bool isMetal);
 	~BulletShape();
