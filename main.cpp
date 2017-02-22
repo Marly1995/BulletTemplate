@@ -42,7 +42,7 @@ glm::vec3 lightColor = { 1.0f, 1.0f, 1.0f };
 glm::vec3 lightPosition = { 2.0f, 2.0f, 1.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 5.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -374,18 +374,27 @@ void initPhysics()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(4.5, 15, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
+	/*BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(4.5, 15, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube);
 
 	BulletShape* cube1 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-4.5, 15, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube1);
 
 	BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 30, 2.5)), btScalar(1), 0.1f, shapes.size(), false, true);
-	shapes.push_back(cube2);
+	shapes.push_back(cube2);*/
+
+	for (int i = 0; i < 10; i++)
+	{
+		BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(rand() % 8 - 4, 201.0f, rand() % 8 - 4)), btScalar(1), 0.1f, shapes.size(), false, true);
+		shapes.push_back(cube2);
+	}
 
 	btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.2, 0.2, 0.2));
-	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 1, 0)), btScalar(50), 0.2f, shapes.size(), true, true);
+	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2, 1, 0)), btScalar(50), 0.2f, shapes.size(), true, true);
 	shapes.push_back(magnet);
+
+	BulletShape* magnet1 = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2, 1, 0)), btScalar(5), 0.2f, shapes.size(), true, true);
+	shapes.push_back(magnet1);
 
 	btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
 	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f, shapes.size(), false, false);
@@ -522,20 +531,20 @@ void magneticSimulation(double simTime)
 			btTransform magnet;
 			shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
-			else 
+			else
 			{
+				btVector3 force = btVector3(0.0f, 0.0f, 0.0f);
 				for (int p = 0; p < 8; p++)
 				{
-					btVector3 force = btVector3(0.0f, 0.0f, 0.0f);
-					magnet.setOrigin(magnetPoint(p, shape.getOrigin(), shapes[k]->vertExtent));	
-					if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && shapes[k])
+					shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+					magnet.setOrigin(magnetPoint(p, magnet.getOrigin(), shapes[k]->vertExtent));
+					if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
 					{
-						force += (simTime * (magnet.getOrigin() - shape.getOrigin()));//lorentzForce(5, 250, shapes[i]->rigidBody->getLinearVelocity().length(), 0.1)));
-						cout << force.x() << "  " << force.y() << "  " << force.z() << "  " << endl;
+						force += ((magnet.getOrigin() - shape.getOrigin() * (5.0f - shape.getOrigin().distance(magnet.getOrigin()))));
 					}
-					shapes[i]->rigidBody->applyCentralForce(force);
-					
+					//cout << magnet.getOrigin().x() << "  " << magnet.getOrigin().y() << "  " << magnet.getOrigin().z() << endl;
 				}
+				shapes[i]->rigidBody->applyCentralForce(force);
 			}
 		}
 	}
@@ -697,8 +706,8 @@ int main(int argc, char* args[])
 
 	loadAssets();
 
-	SDL_CaptureMouse(SDL_TRUE);
-	SDL_ShowCursor(SDL_DISABLE);
+	//SDL_CaptureMouse(SDL_TRUE);
+	//SDL_ShowCursor(SDL_DISABLE);
 
 	while (!done) //loop until done flag is set)
 	{
@@ -717,8 +726,8 @@ int main(int argc, char* args[])
 			accumulator -= deltaTime;
 			time += deltaTime;
 
-			//physicsSimulation(deltaTime);
-			magneticSimulation(deltaTime);
+			physicsSimulation(deltaTime);
+			//magneticSimulation(deltaTime);
 
 			updateSimulation(deltaTime);
 		}
