@@ -24,6 +24,8 @@ double currentTime = 0;
 double deltaTime = 0.01;
 double accumulator = 0;
 double time = 0;
+
+double physicsSpeed = 1;
 // end::globalVariables[]
 glm::mat4 modelMatrix;
 glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
@@ -552,7 +554,7 @@ void magneticSimulation(double simTime)
 
 void physicsSimulation(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(simTime, 1);
+	bWorld.dynamicsWorld->stepSimulation(deltaTime * physicsSpeed, 1);
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		btTransform shape;
