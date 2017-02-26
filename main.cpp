@@ -25,7 +25,7 @@ double deltaTime = 0.01;
 double accumulator = 0;
 double time = 0;
 
-double physicsSpeed = 1;
+double physicsSpeed = 0.1;
 // end::globalVariables[]
 glm::mat4 modelMatrix;
 glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
@@ -44,7 +44,7 @@ glm::vec3 lightColor = { 1.0f, 1.0f, 1.0f };
 glm::vec3 lightPosition = { 2.0f, 2.0f, 1.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 5.0f, 3.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -521,7 +521,7 @@ btVector3 magnetPoint(int point, btVector3 position, float extent)
 
 void magneticSimulation(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(simTime, 1);
+	bWorld.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		btTransform shape;
@@ -554,7 +554,7 @@ void magneticSimulation(double simTime)
 
 void physicsSimulation(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(deltaTime * physicsSpeed, 1);
+	bWorld.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
 	for (int i = 0; i < shapes.size(); i++)
 	{
 		btTransform shape;
@@ -708,8 +708,8 @@ int main(int argc, char* args[])
 
 	loadAssets();
 
-	//SDL_CaptureMouse(SDL_TRUE);
-	//SDL_ShowCursor(SDL_DISABLE);
+	SDL_CaptureMouse(SDL_TRUE);
+	SDL_ShowCursor(SDL_DISABLE);
 
 	while (!done) //loop until done flag is set)
 	{
@@ -728,8 +728,8 @@ int main(int argc, char* args[])
 			accumulator -= deltaTime;
 			time += deltaTime;
 
-			physicsSimulation(deltaTime);
-			//magneticSimulation(deltaTime);
+			//physicsSimulation(deltaTime);
+			magneticSimulation(deltaTime);
 
 			updateSimulation(deltaTime);
 		}
