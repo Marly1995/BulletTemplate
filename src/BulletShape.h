@@ -22,6 +22,7 @@ public:
 	bool magnet;
 	bool metal;
 	float vertExtent;
+	float charge;
 public:
 	BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale, int buffer, bool isMagnet, bool isMetal);
 	~BulletShape();

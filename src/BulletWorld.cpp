@@ -16,7 +16,7 @@ BulletWorld::~BulletWorld()
 {
 	delete dynamicsWorld;
 	delete solver;
-	delete dispatcher;
 	delete collisionConfiguration;
+	delete dispatcher;
 	delete broadphase;
 }
