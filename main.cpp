@@ -44,8 +44,8 @@ glm::vec3 lightColor = { 1.0f, 1.0f, 1.0f };
 glm::vec3 lightPosition = { 2.0f, 2.0f, 1.0f };
 
 GLfloat cameraSpeed = 0.05f;
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraPosition = glm::vec3(1.0f, 10.0f, -1.0f);
+glm::vec3 cameraFront = glm::vec3(-0.5f, 0.5f, -.5f);
 glm::vec3 cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 GLfloat pitch, yaw;
@@ -385,18 +385,18 @@ void initPhysics()
 	BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 30, 2.5)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube2);*/
 
-	//for (int i = 0; i < 10; i++)
-	//{
-		BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0.5, 50, 0)), btScalar(1), 0.1f, shapes.size(), false, true);//BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(rand() % 8 - 4, 201.0f, rand() % 8 - 4)), btScalar(1), 0.1f, shapes.size(), false, true);
+	for (int i = 0; i < 10; i++)
+	{
+		BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(rand() % 8 - 4, 201.0f, rand() % 8 - 4)), btScalar(1), 0.1f, shapes.size(), false, true);
 		shapes.push_back(cube2);
-	//}
+	}
 
 	btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.2, 0.2, 0.2));
 	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2, 1, 0)), btScalar(50), 0.2f, shapes.size(), true, false);
 	shapes.push_back(magnet);
 
-	//BulletShape* magnet1 = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2, 1, 0)), btScalar(5), 0.2f, shapes.size(), true, false);
-	//shapes.push_back(magnet1);
+	BulletShape* magnet1 = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2, 1, 0)), btScalar(5), 0.2f, shapes.size(), true, true);
+	shapes.push_back(magnet1);
 
 	btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
 	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f, shapes.size(), false, false);
@@ -482,12 +482,17 @@ void handleInput()
 
 float Magnitude(btVector3 vec)
 {
-
+	return 0.0f;
 }
 btVector3 lorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
 {
 	btVector3 lf = q*(v + p.cross(b));
 		return lf;
+}
+
+btVector3 fastForce(btTransform shape, btTransform magnet)
+{
+	return (magnet.getOrigin() - shape.getOrigin() * (5.0f - shape.getOrigin().distance(magnet.getOrigin())));
 }
 
 btVector3 magnetPoint(int point, btVector3 position, float extent)
@@ -546,7 +551,7 @@ void magneticSimulation(double simTime)
 					magnet.setOrigin(magnetPoint(p, magnet.getOrigin(), shapes[k]->vertExtent));
 					if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
 					{
-						force += ((magnet.getOrigin() - shape.getOrigin() * (5.0f - shape.getOrigin().distance(magnet.getOrigin()))));
+						force += fastForce(shape, magnet);
 					}
 					//cout << magnet.getOrigin().x() << "  " << magnet.getOrigin().y() << "  " << magnet.getOrigin().z() << endl;
 				}
@@ -572,7 +577,7 @@ void physicsSimulation(double simTime)
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
 			{
-				shapes[i]->rigidBody->applyCentralForce(lorentzForce(shapes[i]->charge,shapes[i]->rigidBody->getLinearVelocity(), shape.getOrigin().normalized(), (magnet.getOrigin() - shape.getOrigin())*(5.0f - shape.getOrigin().distance(magnet.getOrigin()))));
+				shapes[i]->rigidBody->applyCentralForce(fastForce(shape, magnet));
 			}
 		}
 	}
@@ -734,8 +739,8 @@ int main(int argc, char* args[])
 			accumulator -= deltaTime;
 			time += deltaTime;
 
-			physicsSimulation(deltaTime);
-			//magneticSimulation(deltaTime);
+			//physicsSimulation(deltaTime);
+			magneticSimulation(deltaTime);
 
 			updateSimulation(deltaTime);
 		}
