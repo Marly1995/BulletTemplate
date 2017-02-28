@@ -480,9 +480,13 @@ void handleInput()
 }
 // end::handleInput[]
 
+float Magnitude(btVector3 vec)
+{
+
+}
 btVector3 lorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
 {
-	btVector3 lf = q*(p + p.cross(b));
+	btVector3 lf = q*(v + p.cross(b));
 		return lf;
 }
 
@@ -568,7 +572,7 @@ void physicsSimulation(double simTime)
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
 			{
-				shapes[i]->rigidBody->applyCentralForce(lorentzForce(shapes[i]->charge,shapes[i]->rigidBody->getLinearVelocity(), shape.getOrigin(), magnet.getOrigin() - shape.getOrigin()));
+				shapes[i]->rigidBody->applyCentralForce(lorentzForce(shapes[i]->charge,shapes[i]->rigidBody->getLinearVelocity(), shape.getOrigin().normalized(), (magnet.getOrigin() - shape.getOrigin())*(5.0f - shape.getOrigin().distance(magnet.getOrigin()))));
 			}
 		}
 	}
