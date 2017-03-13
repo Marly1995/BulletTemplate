@@ -376,7 +376,7 @@ void initPhysics()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(3, 15, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(8, 15, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube);
 
 	BulletShape* cube1 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-4.5, 15, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
@@ -392,7 +392,7 @@ void initPhysics()
 	}*/
 
 	btCollisionShape* btcubestatic = new btBoxShape(btVector3(0.2, 0.2, 0.2));
-	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 5, 0)), btScalar(0), 0.2f, shapes.size(), true, true);
+	BulletShape* magnet = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)), btScalar(0), 0.2f, shapes.size(), true, true);
 	shapes.push_back(magnet);
 
 	BulletShape* magnet1 = new BulletShape(btcubestatic, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2, 1, 0)), btScalar(50), 0.2f, shapes.size(), true, true);
@@ -562,7 +562,7 @@ void magneticSimulation(double simTime)
 					{
 						shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
 						shape.setOrigin(magnetPoint(q, shape.getOrigin(), shapes[i]->vertExtent));
-						if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
+						if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && shapes[k])
 						{
 							//force += fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin());
 							shapes[i]->rigidBody->applyForce(fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
