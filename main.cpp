@@ -484,6 +484,14 @@ float Magnitude(btVector3 vec)
 {
 	return 0.0f;
 }
+
+float magneticFieldCalculation(float I, btVector3 magnet, btVector3 object)
+{
+	float R = magnet.distance(object);
+	float H = I / (2 * glm::pi<float>() * R);
+	return H;
+}
+
 btVector3 lorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
 {
 	btVector3 lf = q*(v + p.cross(b));
@@ -492,7 +500,7 @@ btVector3 lorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
 
 btVector3 fastForce(btTransform shape, btTransform magnet)
 {
-	return (magnet.getOrigin() - shape.getOrigin() * (5.0f - shape.getOrigin().distance(magnet.getOrigin())));
+	return (magnet.getOrigin() - shape.getOrigin());// *(5.0f - shape.getOrigin().distance(magnet.getOrigin())));
 }
 
 btVector3 magnetPoint(int point, btVector3 position, float extent)
@@ -551,7 +559,7 @@ void magneticSimulation(double simTime)
 					magnet.setOrigin(magnetPoint(p, magnet.getOrigin(), shapes[k]->vertExtent));
 					if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
 					{
-						force += fastForce(shape, magnet);
+						force += fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin());
 					}
 					//cout << magnet.getOrigin().x() << "  " << magnet.getOrigin().y() << "  " << magnet.getOrigin().z() << endl;
 				}
