@@ -14,7 +14,7 @@ BulletShape::BulletShape(btCollisionShape* newShape, btTransform newTransform, b
 	vertexBuffer = buffer;
 	vertExtent = vertScale;
 	CreateVertexData(vertScale);
-	charge = 100.0f;
+	charge = 10.0f;
 }
 
 
