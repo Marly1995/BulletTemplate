@@ -376,10 +376,10 @@ void initPhysics()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(8, 15, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(8, 5, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube);
 
-	BulletShape* cube1 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-4.5, 15, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
+	BulletShape* cube1 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-4.5, 5, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube1);
 	/*
 	BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 30, 2.5)), btScalar(1), 0.1f, shapes.size(), false, true);
@@ -589,9 +589,9 @@ void physicsSimulation(double simTime)
 			btTransform magnet;
 			shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
-			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && shapes[k])
+			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				shapes[i]->rigidBody->applyCentralForce(fastForce(shape, magnet));
+				shapes[i]->rigidBody->applyCentralForce(fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
 			}
 		}
 	}
@@ -753,8 +753,8 @@ int main(int argc, char* args[])
 			accumulator -= deltaTime;
 			time += deltaTime;
 
-			//physicsSimulation(deltaTime);
-			magneticSimulation(deltaTime);
+			physicsSimulation(deltaTime);
+			//magneticSimulation(deltaTime);
 
 			updateSimulation(deltaTime);
 		}
