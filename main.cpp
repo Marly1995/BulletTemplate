@@ -493,15 +493,20 @@ float magneticFieldCalculation(float I, btVector3 magnet, btVector3 object)
 	return H;
 }
 
-btVector3 lorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
+btVector3 VectorFieldCurl(btVector3 A)
+{
+		
+}
+
+btVector3 LorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
 {
 	btVector3 lf = q*(v + p.cross(b));
 		return lf;
 }
 
-btVector3 fastForce(btTransform shape, btTransform magnet)
+btVector3 FastForce(btTransform shape, btTransform magnet)
 {
-	return (magnet.getOrigin() - shape.getOrigin());// *(5.0f - shape.getOrigin().distance(magnet.getOrigin())));
+	return (magnet.getOrigin() - shape.getOrigin());
 }
 
 btVector3 magnetPoint(int point, btVector3 position, float extent)
@@ -565,7 +570,7 @@ void magneticSimulation(double simTime)
 						if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && shapes[k])
 						{
 							//force += fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin());
-							shapes[i]->rigidBody->applyForce(fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
+							shapes[i]->rigidBody->applyForce(FastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
 						}						
 					}					
 				}
@@ -591,7 +596,7 @@ void physicsSimulation(double simTime)
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				shapes[i]->rigidBody->applyCentralForce(fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
+				shapes[i]->rigidBody->applyCentralForce(FastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
 			}
 		}
 	}
