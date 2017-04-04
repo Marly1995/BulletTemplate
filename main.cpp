@@ -411,6 +411,7 @@ void initPhysics()
 		bWorld.dynamicsWorld->addRigidBody(shapes[i]->rigidBody);
 	}	
 }
+
 // TODO: comtrols to move magnet for testing real time performance
 // tag::handleInput[]
 void handleInput()
@@ -493,9 +494,27 @@ float magneticFieldCalculation(float I, btVector3 magnet, btVector3 object)
 	return H;
 }
 
+float xcurl(float x)
+{
+	return cosf(2*glm::pi<float>()*x);
+}
+
+float ycurl(float x)
+{
+	return cosf(2 * glm::pi<float>()*x);
+}
+
+float zcurl(float x, float y)
+{
+	return x-y;
+}
+
 btVector3 VectorFieldCurl(btVector3 A)
 {
-		
+	float x = xcurl(A.x());
+	float y = ycurl(A.x());
+	float z = zcurl(A.x(), A.y());
+	return btVector3(x, y, z);
 }
 
 btVector3 LorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
@@ -649,6 +668,9 @@ void updateSimulation(double simTime) //update simulation with an amount of time
 	front.y = sin(glm::radians(-pitch));
 	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
 	cameraFront = glm::normalize(front);
+
+	btVector3 V = VectorFieldCurl(btVector3(3.f, 4.f, 0.0f));
+	cout << V.z() << endl;
 }
 // end::updateSimulation[]
 
