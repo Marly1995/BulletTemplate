@@ -514,7 +514,7 @@ btVector3 VectorFieldCurl(btVector3 A)
 	float x = xcurl(A.x());
 	float y = ycurl(A.x());
 	float z = zcurl(A.x(), A.y());
-	return btVector3(x, y, z);
+	return btVector3(x*A.x(), y*A.y(), z*A.z());
 }
 
 btVector3 LorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
@@ -669,7 +669,7 @@ void updateSimulation(double simTime) //update simulation with an amount of time
 	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
 	cameraFront = glm::normalize(front);
 
-	btVector3 V = VectorFieldCurl(btVector3(3.f, 4.f, 0.0f));
+	btVector3 V = VectorFieldCurl(btVector3(3.f, 4.f, 0.5f));
 	cout << V.z() << endl;
 }
 // end::updateSimulation[]
