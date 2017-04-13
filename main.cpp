@@ -487,11 +487,26 @@ float Magnitude(btVector3 vec)
 	return 0.0f;
 }
 
-float magneticFieldCalculation(float I, btVector3 magnet, btVector3 object)
+float magneticStrengthCalculation(float I, btVector3 magnet, btVector3 object)
 {
 	float R = magnet.distance(object);
 	float H = I / (2 * glm::pi<float>() * R);
 	return H;
+}
+
+float xfield(float x, float y, float z)
+{
+	return -(x / y)*glm::sin(x)*x*glm::sinh(y)*y*glm::sin(z)*z;
+}
+
+float yfield(float x, float y, float z)
+{
+	return glm::cos(x)*x*glm::cosh(y)*y*glm::sin(z)*z;
+}
+
+float zfield(float x, float y, float z)
+{
+	return (z/y)*glm::cos(x)*x*glm::sinh(y)*y*glm::cos(z)*z;
 }
 
 float xcurl(float x)
@@ -509,11 +524,11 @@ float zcurl(float x, float y)
 	return x-y;
 }
 
-btVector3 VectorFieldCurl(btVector3 A)
+btVector3 VectorField(btVector3 A)
 {
-	float x = xcurl(A.x());
-	float y = ycurl(A.x());
-	float z = zcurl(A.x(), A.y());
+	float x = xfield(A.x(), A.y(), A.z());
+	float y = yfield(A.x(), A.y(), A.z());
+	float z = zfield(A.x(), A.y(), A.z());
 	return btVector3(x*A.x(), y*A.y(), z*A.z());
 }
 
@@ -589,7 +604,7 @@ void magneticSimulation(double simTime)
 						if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && shapes[k])
 						{
 							//force += fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin());
-							shapes[i]->rigidBody->applyForce(FastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
+							shapes[i]->rigidBody->applyForce(FastForce(shape, magnet) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
 						}						
 					}					
 				}
@@ -615,7 +630,7 @@ void physicsSimulation(double simTime)
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				shapes[i]->rigidBody->applyCentralForce(FastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
+				shapes[i]->rigidBody->applyCentralForce(FastForce(shape, magnet) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
 			}
 		}
 	}
@@ -669,8 +684,8 @@ void updateSimulation(double simTime) //update simulation with an amount of time
 	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
 	cameraFront = glm::normalize(front);
 
-	btVector3 V = VectorFieldCurl(btVector3(3.f, 4.f, 0.5f));
-	cout << V.z() << endl;
+	btVector3 V = VectorField(btVector3(3.f, 4.f, 0.5f));
+	cout << V.x() << endl;
 }
 // end::updateSimulation[]
 
