@@ -636,7 +636,8 @@ void physicsSimulation(double simTime)
 	}
 }
 // tag::updateSimulation[]
-void updateSimulation(double simTime) //update simulation with an amount of time to simulate for (in seconds)
+
+void cameraSimulation(double simTime)
 {
 	cameraSpeed = 2.0f * simTime;
 	if (cameraForward == true) {
@@ -668,7 +669,7 @@ void updateSimulation(double simTime) //update simulation with an amount of time
 	GLfloat sensitivity = 0.05f;;
 	xOffset *= sensitivity;
 	yOffset *= sensitivity;
-	
+
 
 	yaw += xOffset;
 	pitch += yOffset;
@@ -683,6 +684,11 @@ void updateSimulation(double simTime) //update simulation with an amount of time
 	front.y = sin(glm::radians(-pitch));
 	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
 	cameraFront = glm::normalize(front);
+}
+
+void updateSimulation(double simTime) //update simulation with an amount of time to simulate for (in seconds)
+{
+	cameraSimulation(simTime);
 
 	btVector3 V = VectorField(btVector3(3.f, 4.f, 0.5f));
 	cout << V.x() << endl;
