@@ -376,11 +376,11 @@ void initPhysics()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2, 5, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2, 5, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube);
 
 	BulletShape* cube1 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2.5, 5, 0)), btScalar(1), 0.1f, shapes.size(), false, true);
-	shapes.push_back(cube1);
+	//shapes.push_back(cube1);
 	/*
 	BulletShape* cube2 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2.5, 30, 2.5)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube2);*/
@@ -494,17 +494,20 @@ float magneticStrengthCalculation(float I, btVector3 magnet, btVector3 object)
 
 float xfield(float x, float y, float z)
 {
-	return -(x / y)*glm::sin(x)*x*glm::sinh(y)*y*glm::sin(z)*z;
+	//return -(x / y)*glm::sin(x)*x*glm::sinh(y)*y*glm::sin(z)*z;
+	return -x - y;
 }
 
 float yfield(float x, float y, float z)
 {
-	return glm::cos(x)*x*glm::cosh(y)*y*glm::sin(z)*z;
+	//return glm::cos(x)*x*glm::cosh(y)*y*glm::sin(z)*z;
+	return -y - x;
 }
 
 float zfield(float x, float y, float z)
 {
-	return (z/y)*glm::cos(x)*x*glm::sinh(y)*y*glm::cos(z)*z;
+	//return (z/y)*glm::cos(x)*x*glm::sinh(y)*y*glm::cos(z)*z;
+	return -z + x - y;
 }
 
 float xcurl(float x)
@@ -524,15 +527,18 @@ float zcurl(float x, float y)
 
 btVector3 VectorField(btVector3 A)
 {
-	float x = xfield(A.x(), A.y(), A.z());
-	float y = yfield(A.x(), A.y(), A.z());
-	float z = zfield(A.x(), A.y(), A.z());
-	return btVector3(x*A.x(), y*A.y(), z*A.z());
+	float x = -xfield(A.x(), A.y(), A.z());
+	float y = -yfield(A.x(), A.y(), A.z());
+	float z = -zfield(A.x(), A.y(), A.z());
+	
+	//std::cout << x << "   " << y << "   " << z << endl;
+	return btVector3(x, y, z);
 }
 
-btVector3 LorentzForce(float q, btVector3 v, btVector3 p, btVector3 b)
+btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
 {
-	btVector3 lf = q*(v + p.cross(b));
+	btVector3 lf = 1.0f*(v.cross(b));
+	//cout << v.y() << endl;
 		return lf;
 }
 
@@ -574,7 +580,7 @@ btVector3 magnetPoint(int point, btVector3 position, float extent)
 	return position;
 }
 
-void edgeBasedMagnetism(double simTime)
+void cornerBasedMagnetism(double simTime)
 {
 	bWorld.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
 	for (int i = 0; i < shapes.size(); i++)
@@ -650,7 +656,8 @@ void particleRealCalculation(double simTime)
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				shapes[i]->rigidBody->applyCentralForce(positionalDifference(shape, magnet) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				btVector3 lf = LorentzForce(1000.0f, shapes[i]->rigidBody->getLinearVelocity(), VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				shapes[i]->rigidBody->applyCentralForce(lf);
 			}
 		}
 	}
@@ -818,8 +825,8 @@ int main(int argc, char* args[])
 			accumulator -= deltaTime;
 			time += deltaTime;
 
-			particleRealCalculation(deltaTime);
-			//particleBasedMagnetism(deltaTime);
+			//particleRealCalculation(deltaTime);
+			particleBasedMagnetism(deltaTime);
 			//magneticSimulation(deltaTime);
 
 			mainSimulation(deltaTime);
