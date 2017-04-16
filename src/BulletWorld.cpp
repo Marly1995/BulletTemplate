@@ -50,6 +50,7 @@ void BulletWorld::SceneOne()
 
 	btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
 	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f, shapes.size(), false, false);
+	shapes.push_back(plane);
 
 	// define gravity
 	dynamicsWorld->setGravity(btVector3(0.0f, -9.81f, 0.0f));
