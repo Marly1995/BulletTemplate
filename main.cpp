@@ -34,6 +34,7 @@ glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
 std::vector <BulletShape*> shapes;
 // Bullet vars
 BulletWorld bWorld = BulletWorld();
+BulletWorld sceneOne = BulletWorld();
 // end Bullet vars
 
 //our variables
@@ -362,9 +363,9 @@ void loadAssets()
 {
 	initializeProgram(); //create GLSL Shaders, link into a GLSL program, and get IDs of attributes and variables
 
-	for (int i = 0; i < shapes.size(); i++)
+	for (int i = 0; i < sceneOne.shapes.size(); i++)
 	{
-		initializeVertexBuffer(shapes[i]); //load data into a vertex buffer
+		initializeVertexBuffer(sceneOne.shapes[i]); //load data into a vertex buffer
 	}
 
 	cout << "Loaded Assets OK!\n";
@@ -410,6 +411,7 @@ void initPhysics()
 		shapes[i]->rigidBody->setFriction(2.0f);
 		bWorld.dynamicsWorld->addRigidBody(shapes[i]->rigidBody);
 	}	
+	sceneOne.SceneOne();
 }
 
 // TODO: comtrols to move magnet for testing real time performance
@@ -640,6 +642,28 @@ void particleBasedMagnetism(double simTime)
 	}
 }
 
+void scenemagnetism(double simTime)
+{
+	sceneOne.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < sceneOne.shapes.size(); i++)
+	{
+		btTransform shape;
+		sceneOne.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(sceneOne.shapes[i]->GLmatrix));
+
+		for (int k = 0; k < sceneOne.shapes.size(); k++)
+		{
+			btTransform magnet;
+			sceneOne.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !sceneOne.shapes[k]->magnet || !sceneOne.shapes[i]->metal) {}
+			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
+			{
+				//sceneOne.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+			}
+		}
+	}
+}
+
 void particleRealCalculation(double simTime)
 {
 	bWorld.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
@@ -761,6 +785,39 @@ void render()
 
 	glUseProgram(0); //clean up
 }
+
+void scenerender()
+{
+	glUseProgram(theProgram); //installs the program object specified by program as part of current rendering state
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+
+	glUniform3f(cameraPositionLocation, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+	glUniform3f(lightColorLocation, lightColor[0], lightColor[1], lightColor[2]);
+	glUniform3f(lightPositionLocation, lightPosition[0], lightPosition[1], lightPosition[2]);
+
+	glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraViewUp);
+
+	glUniformMatrix4fv(projectionMatrixLocation, 1, false, glm::value_ptr(projection));
+
+	glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
+
+	for (int i = 0; i < sceneOne.shapes.size(); i++)
+	{
+		glBindVertexArray(sceneOne.shapes[i]->arrayBuffer);
+
+		glUniform4f(colorLocation, sceneOne.shapes[i]->color[0], sceneOne.shapes[i]->color[1], sceneOne.shapes[i]->color[2], sceneOne.shapes[i]->color[3]);
+
+		//set modelMatrix and draw for triangle 1
+		modelMatrix = sceneOne.shapes[i]->GLmatrix;
+		glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
+		glDrawArrays(GL_TRIANGLES, 0, sceneOne.shapes[i]->vertexData.size() / 6);
+
+		glBindVertexArray(0);
+	}
+
+	glUseProgram(0); //clean up
+}
 // end::render[]
 
 // tag::postRender[]
@@ -826,16 +883,17 @@ int main(int argc, char* args[])
 			time += deltaTime;
 
 			//particleRealCalculation(deltaTime);
-			particleBasedMagnetism(deltaTime);
+			//particleBasedMagnetism(deltaTime);
 			//magneticSimulation(deltaTime);
+			scenemagnetism(deltaTime);
 
 			mainSimulation(deltaTime);
 		}
 
 		preRender();
 
-		render(); // this should render the world state according to VARIABLES -
-
+		//render(); // this should render the world state according to VARIABLES -
+		scenerender();
 		postRender();
 
 	}
