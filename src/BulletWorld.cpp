@@ -4,21 +4,50 @@
 
 BulletWorld::BulletWorld()
 {
-	broadphase = new btDbvtBroadphase();
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
+	broadphase = new btDbvtBroadphase();
 	solver = new btSequentialImpulseConstraintSolver;
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+	shapes.clear();
 }
 
 // TODO: fix deletion of objects here
 BulletWorld::~BulletWorld()
 {
+	//for (int i = dynamicsWorld->getNumCollisionObjects() -1; i >= 0; i--)
+	//{
+	//	btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+	//	btRigidBody* body = btRigidBody::upcast(obj);
+	//	if (body && body->getMotionState())
+	//	{
+	//		delete body->getMotionState();
+	//	}
+	//	dynamicsWorld->removeCollisionObject(obj);
+	//	delete obj;
+	//}
+
+	//for (int i = 0; i < shapes.size(); i++)
+	//{
+	//	//dynamicsWorld->removeRigidBody(shapes[i]->rigidBody);
+	//	btCollisionShape* shape = shapes[i]->shape;
+	//	shapes[i]->shape = 0;
+	//	delete shape;
+	//}
+
+	/*for (int i = 0; i < shapes.size(); i++)
+	{
+		dynamicsWorld->removeRigidBody(shapes[i]->rigidBody);
+		delete shapes[i]->rigidBody->getMotionState();
+		delete shapes[i]->rigidBody->getCollisionShape();
+		delete shapes[i]->rigidBody;
+	}
+
 	delete dynamicsWorld;
 	delete solver;
-	delete collisionConfiguration;
-	delete dispatcher;
 	delete broadphase;
+	delete dispatcher;
+	delete collisionConfiguration;	*/
 }
 
 void BulletWorld::SceneOne()

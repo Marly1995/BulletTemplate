@@ -4,9 +4,9 @@
 class BulletWorld
 {
 public:
-	btBroadphaseInterface* broadphase;
 	btDefaultCollisionConfiguration* collisionConfiguration;
 	btCollisionDispatcher* dispatcher;
+	btBroadphaseInterface* broadphase;
 	btSequentialImpulseConstraintSolver* solver;
 	btDiscreteDynamicsWorld* dynamicsWorld;
 

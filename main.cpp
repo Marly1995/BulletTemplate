@@ -445,13 +445,19 @@ void handleInput()
 					break;
 				case SDLK_d: cameraRight = true;
 					break;
-					case SDLK_q: cameraUp = true;
-						break;
-					case SDLK_e: cameraDown = true;
-						break;
+				case SDLK_q: cameraUp = true;
+					break;
+				case SDLK_e: cameraDown = true;
+					break;
 				case SDLK_SPACE: cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
 					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 					cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
+					break;
+
+				case SDLK_1: sceneOne = 
+				BulletWorld();
+					sceneOne.SceneOne();
+					loadAssets();
 					break;
 				}
 			break;
@@ -836,10 +842,6 @@ void cleanUp()
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
 	cout << "Cleaning up OK!\n";
-	for  (int i = 0; i < shapes.size(); i++)
-	{
-		bWorld.dynamicsWorld->removeRigidBody(shapes[i]->rigidBody);
-	}
 }
 // end::cleanUp[]
 

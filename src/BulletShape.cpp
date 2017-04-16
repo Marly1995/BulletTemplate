@@ -20,9 +20,9 @@ BulletShape::BulletShape(btCollisionShape* newShape, btTransform newTransform, b
 
 BulletShape::~BulletShape()
 {
-	delete rigidBody->getMotionState();
-	delete rigidBody;
-	delete shape;
+	//delete rigidBody->getMotionState();
+	//delete rigidBody;
+	//delete shape;
 }
 
 void BulletShape::PickColor(int col)
