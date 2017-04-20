@@ -55,7 +55,7 @@ void BulletWorld::SceneOne()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2, 5, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2, 7, 1)), btScalar(1), 0.1f, shapes.size(), false, true);
 	shapes.push_back(cube);
 
 	BulletShape* cube1 = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(-2.5, 5, 0)), btScalar(1), 0.1f, shapes.size(), false, true);

@@ -25,7 +25,7 @@ double deltaTime = 0.01;
 double accumulator = 0;
 double time = 0;
 
-double physicsSpeed = 0.1;
+double physicsSpeed = 0.5;
 // end::globalVariables[]
 glm::mat4 modelMatrix;
 glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
@@ -557,6 +557,24 @@ btVector3 VectorField(btVector3 A)
 	return -btVector3(x*0.003f, y*0.003f, z*0.003f);
 }
 
+btVector3 magneticForce(btVector3 point, btVector3 magnet)
+{
+	btVector3 vec = point - magnet;
+	float dist = vec.length();
+	float str = 100.0f / dist*dist;
+	return btVector3(vec.x()*str, vec.y()*str, vec.z()*str);
+}
+
+btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
+{
+	pole1.setY(pole1.y() + 0.5f);
+	pole2.setY(pole2.y() - 0.5f);
+	btVector3 v1 = magneticForce(point, pole1);
+	btVector3 v2 = magneticForce(pole2, point);
+	btVector3 v3 = v1 + v2;
+	return -v3.normalized();
+}
+
 btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
 {
 	btVector3 lf = 1.0f*(v.cross(b));
@@ -678,7 +696,9 @@ void scenemagnetism(double simTime)
 			if (k == i || !sceneOne.shapes[k]->magnet || !sceneOne.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				sceneOne.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				//sceneOne.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				sceneOne.shapes[i]->rigidBody->applyCentralForce(fieldCalculation(shape.getOrigin(), magnet.getOrigin(), magnet.getOrigin()) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+
 			}
 		}
 	}
