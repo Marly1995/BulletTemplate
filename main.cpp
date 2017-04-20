@@ -585,7 +585,7 @@ btVector3 VectorField(btVector3 A)
 	y = sinth*sinph*costh + costh*sinph*eth;
 	z = costh * costh - sinth * eth;
 	
-	std::cout << x << "   " << y << "   " << z << endl;
+	//std::cout << x << "   " << y << "   " << z << endl;
 	return -btVector3(x*0.003f, y*0.003f, z*0.003f);
 }
 
@@ -726,9 +726,9 @@ void scenemagnetism(double simTime)
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				//sceneOne.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-				activeScene.shapes[i]->rigidBody->applyCentralForce(fieldCalculation(positionalDifference(shape, magnet), magnet.getOrigin(), magnet.getOrigin()) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-
+				activeScene.shapes[i]->rigidBody->applyCentralForce(
+					fieldCalculation(positionalDifference(shape, magnet), magnet.getOrigin(), magnet.getOrigin()) * 
+						magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
 			}
 		}
 	}
