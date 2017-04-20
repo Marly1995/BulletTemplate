@@ -16,5 +16,9 @@ public:
 	~BulletWorld();
 
 	void SceneOne();
+	void SceneTwo();
+	void SceneThree();
+	void SceneFour();
+	void SceneFive();
 };
 

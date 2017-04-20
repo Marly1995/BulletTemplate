@@ -461,9 +461,35 @@ void handleInput()
 					activeScene.SceneOne();
 					loadAssets();
 					break;
+				case SDLK_2: activeScene =
+					BulletWorld();
+					activeScene.SceneTwo();
+					loadAssets();
+					break;
+				case SDLK_3: activeScene =
+					BulletWorld();
+					activeScene.SceneThree();
+					loadAssets();
+					break;
+				case SDLK_4: activeScene =
+					BulletWorld();
+					activeScene.SceneFour();
+					loadAssets();
+					break;
+				case SDLK_5: activeScene =
+					BulletWorld();
+					activeScene.SceneFive();
+					loadAssets();
+					break;
 
 					// simulation metho selection
-				case SDLK_m: magnetismMethod = 0;
+				case SDLK_v: magnetismMethod = 0;
+					break;
+				case SDLK_b: magnetismMethod = 1;
+					break;
+				case SDLK_n: magnetismMethod = 2;
+					break;
+				case SDLK_m: magnetismMethod = 3;
 					break;
 				}
 			break;
@@ -652,13 +678,11 @@ void cornerBasedMagnetism(double simTime)
 						shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
 						shape.setOrigin(magnetPoint(q, shape.getOrigin(), shapes[i]->vertExtent));
 						if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && shapes[k])
-						{
-							//force += fastForce(shape, magnet) * magneticFieldCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin());
-							shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
+						{							
+							activeScene.shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
 						}						
 					}					
 				}
-				//shapes[i]->rigidBody->applyCentralForce(force);
 			}
 		}
 	}
@@ -680,7 +704,7 @@ void particleBasedMagnetism(double simTime)
 			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
+				activeScene.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
 			}
 		}
 	}
@@ -929,11 +953,16 @@ int main(int argc, char* args[])
 			case 0:
 				scenemagnetism(deltaTime);
 				break;
-			}
-			//particleRealCalculation(deltaTime);
-			//particleBasedMagnetism(deltaTime);
-			//magneticSimulation(deltaTime);
-			
+			case 1:
+				particleRealCalculation(deltaTime);
+				break;
+			case 2:
+				particleBasedMagnetism(deltaTime);
+				break;
+			case 3:
+				cornerBasedMagnetism(deltaTime);
+				break;
+			}	
 
 			mainSimulation(deltaTime);
 		}
