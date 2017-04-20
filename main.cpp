@@ -654,32 +654,32 @@ btVector3 magnetPoint(int point, btVector3 position, float extent)
 
 void cornerBasedMagnetism(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
-	for (int i = 0; i < shapes.size(); i++)
+	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
 		btTransform shape;
-		shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-		shape.getOpenGLMatrix(glm::value_ptr(shapes[i]->GLmatrix));
+		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
 
-		for (int k = 0; k < shapes.size(); k++)
+		for (int k = 0; k < activeScene.shapes.size(); k++)
 		{
 			btTransform magnet;
-			shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
+			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else
 			{
 				btVector3 force = btVector3(0.0f, 0.0f, 0.0f);
 				for (int p = 0; p < 8; p++)
 				{
-					shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-					magnet.setOrigin(magnetPoint(p, magnet.getOrigin(), shapes[k]->vertExtent));
+					activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+					magnet.setOrigin(magnetPoint(p, magnet.getOrigin(), activeScene.shapes[k]->vertExtent));
 					for (int q = 0; q < 8; q++)
 					{
-						shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-						shape.setOrigin(magnetPoint(q, shape.getOrigin(), shapes[i]->vertExtent));
-						if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && shapes[k])
+						activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+						shape.setOrigin(magnetPoint(q, shape.getOrigin(), activeScene.shapes[i]->vertExtent));
+						if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && activeScene.shapes[k])
 						{							
-							activeScene.shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
+							activeScene.shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
 						}						
 					}					
 				}
@@ -690,21 +690,21 @@ void cornerBasedMagnetism(double simTime)
 
 void particleBasedMagnetism(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
-	for (int i = 0; i < shapes.size(); i++)
+	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
 		btTransform shape;
-		shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-		shape.getOpenGLMatrix(glm::value_ptr(shapes[i]->GLmatrix));
+		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
 
-		for (int k = 0; k < shapes.size(); k++)
+		for (int k = 0; k < activeScene.shapes.size(); k++)
 		{
 			btTransform magnet;
-			shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
+			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				activeScene.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
+				activeScene.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
 			}
 		}
 	}
@@ -736,22 +736,22 @@ void scenemagnetism(double simTime)
 
 void particleRealCalculation(double simTime)
 {
-	bWorld.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
-	for (int i = 0; i < shapes.size(); i++)
+	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
 		btTransform shape;
-		shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-		shape.getOpenGLMatrix(glm::value_ptr(shapes[i]->GLmatrix));
+		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
 
-		for (int k = 0; k < shapes.size(); k++)
+		for (int k = 0; k < activeScene.shapes.size(); k++)
 		{
 			btTransform magnet;
-			shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-			if (k == i || !shapes[k]->magnet || !shapes[i]->metal) {}
+			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				btVector3 lf = LorentzForce(1000.0f, shapes[i]->rigidBody->getLinearVelocity(), VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-				shapes[i]->rigidBody->applyCentralForce(lf);
+				btVector3 lf = LorentzForce(1000.0f, activeScene.shapes[i]->rigidBody->getLinearVelocity(), VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				activeScene.shapes[i]->rigidBody->applyCentralForce(lf);
 			}
 		}
 	}
@@ -928,8 +928,8 @@ int main(int argc, char* args[])
 
 	loadAssets();
 
-	SDL_CaptureMouse(SDL_TRUE);
-	SDL_ShowCursor(SDL_DISABLE);
+	//SDL_CaptureMouse(SDL_TRUE);
+	//SDL_ShowCursor(SDL_DISABLE);
 
 	while (!done) //loop until done flag is set)
 	{
