@@ -535,12 +535,26 @@ float zcurl(float x, float y)
 
 btVector3 VectorField(btVector3 A)
 {
-	float x = -xfield(A.x(), A.y(), A.z());
-	float y = -yfield(A.x(), A.y(), A.z());
-	float z = -zfield(A.x(), A.y(), A.z());
+	float x = xfield(A.x(), A.y(), A.z());
+	float y = yfield(A.x(), A.y(), A.z());
+	float z = zfield(A.x(), A.y(), A.z());
+
+	float r = glm::sqrt(A.x()*A.x()*A.y()*A.y()*A.z()*A.z());
+	float rz = glm::sqrt(A.x()*A.x()*A.y()*A.y());
+
+	float costh = A.z() / r;
+	float sinth = rz / r;
+	double sinph = A.y() / rz;
+	float cosph = A.x() / rz;
 	
-	//std::cout << x << "   " << y << "   " << z << endl;
-	return btVector3(x, y, z);
+	float eth = 2 * sinth;
+
+	x = sinth*cosph*costh + costh*cosph*eth;
+	y = sinth*sinph*costh + costh*sinph*eth;
+	z = costh * costh - sinth * eth;
+	
+	std::cout << x << "   " << y << "   " << z << endl;
+	return -btVector3(x*0.003f, y*0.003f, z*0.003f);
 }
 
 btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
@@ -664,7 +678,7 @@ void scenemagnetism(double simTime)
 			if (k == i || !sceneOne.shapes[k]->magnet || !sceneOne.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				//sceneOne.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				sceneOne.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
 			}
 		}
 	}
