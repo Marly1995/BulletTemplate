@@ -34,7 +34,8 @@ glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
 std::vector <BulletShape*> shapes;
 // Bullet vars
 BulletWorld bWorld = BulletWorld();
-BulletWorld sceneOne = BulletWorld();
+BulletWorld activeScene = BulletWorld();
+int magnetismMethod = 0;
 // end Bullet vars
 
 //our variables
@@ -363,9 +364,9 @@ void loadAssets()
 {
 	initializeProgram(); //create GLSL Shaders, link into a GLSL program, and get IDs of attributes and variables
 
-	for (int i = 0; i < sceneOne.shapes.size(); i++)
+	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
-		initializeVertexBuffer(sceneOne.shapes[i]); //load data into a vertex buffer
+		initializeVertexBuffer(activeScene.shapes[i]); //load data into a vertex buffer
 	}
 
 	cout << "Loaded Assets OK!\n";
@@ -411,7 +412,7 @@ void initPhysics()
 		shapes[i]->rigidBody->setFriction(2.0f);
 		bWorld.dynamicsWorld->addRigidBody(shapes[i]->rigidBody);
 	}	
-	sceneOne.SceneOne();
+	activeScene.SceneOne();
 }
 
 // TODO: comtrols to move magnet for testing real time performance
@@ -454,10 +455,15 @@ void handleInput()
 					cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
 					break;
 
-				case SDLK_1: sceneOne = 
+					// scene selection
+				case SDLK_1: activeScene = 
 				BulletWorld();
-					sceneOne.SceneOne();
+					activeScene.SceneOne();
 					loadAssets();
+					break;
+
+					// simulation metho selection
+				case SDLK_m: magnetismMethod = 0;
 					break;
 				}
 			break;
@@ -567,12 +573,12 @@ btVector3 magneticForce(btVector3 point, btVector3 magnet)
 
 btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
 {
-	pole1.setY(pole1.y() + 0.5f);
-	pole2.setY(pole2.y() - 0.5f);
+	pole1.setY(pole1.y() - 0.1f);
+	pole2.setY(pole2.y() + 0.1f);
 	btVector3 v1 = magneticForce(point, pole1);
 	btVector3 v2 = magneticForce(pole2, point);
 	btVector3 v3 = v1 + v2;
-	return -v3.normalized();
+	return v3.normalized();
 }
 
 btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
@@ -682,22 +688,22 @@ void particleBasedMagnetism(double simTime)
 
 void scenemagnetism(double simTime)
 {
-	sceneOne.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
-	for (int i = 0; i < sceneOne.shapes.size(); i++)
+	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
 		btTransform shape;
-		sceneOne.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-		shape.getOpenGLMatrix(glm::value_ptr(sceneOne.shapes[i]->GLmatrix));
+		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
 
-		for (int k = 0; k < sceneOne.shapes.size(); k++)
+		for (int k = 0; k < activeScene.shapes.size(); k++)
 		{
 			btTransform magnet;
-			sceneOne.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-			if (k == i || !sceneOne.shapes[k]->magnet || !sceneOne.shapes[i]->metal) {}
+			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
 				//sceneOne.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-				sceneOne.shapes[i]->rigidBody->applyCentralForce(fieldCalculation(shape.getOrigin(), magnet.getOrigin(), magnet.getOrigin()) * magneticStrengthCalculation(sceneOne.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				activeScene.shapes[i]->rigidBody->applyCentralForce(fieldCalculation(positionalDifference(shape, magnet), magnet.getOrigin(), magnet.getOrigin()) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
 
 			}
 		}
@@ -842,16 +848,16 @@ void scenerender()
 
 	glUniformMatrix4fv(viewMatrixLocation, 1, false, glm::value_ptr(view));
 
-	for (int i = 0; i < sceneOne.shapes.size(); i++)
+	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
-		glBindVertexArray(sceneOne.shapes[i]->arrayBuffer);
+		glBindVertexArray(activeScene.shapes[i]->arrayBuffer);
 
-		glUniform4f(colorLocation, sceneOne.shapes[i]->color[0], sceneOne.shapes[i]->color[1], sceneOne.shapes[i]->color[2], sceneOne.shapes[i]->color[3]);
+		glUniform4f(colorLocation, activeScene.shapes[i]->color[0], activeScene.shapes[i]->color[1], activeScene.shapes[i]->color[2], activeScene.shapes[i]->color[3]);
 
 		//set modelMatrix and draw for triangle 1
-		modelMatrix = sceneOne.shapes[i]->GLmatrix;
+		modelMatrix = activeScene.shapes[i]->GLmatrix;
 		glUniformMatrix4fv(modelMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-		glDrawArrays(GL_TRIANGLES, 0, sceneOne.shapes[i]->vertexData.size() / 6);
+		glDrawArrays(GL_TRIANGLES, 0, activeScene.shapes[i]->vertexData.size() / 6);
 
 		glBindVertexArray(0);
 	}
@@ -918,10 +924,16 @@ int main(int argc, char* args[])
 			accumulator -= deltaTime;
 			time += deltaTime;
 
+			switch (magnetismMethod)
+			{
+			case 0:
+				scenemagnetism(deltaTime);
+				break;
+			}
 			//particleRealCalculation(deltaTime);
 			//particleBasedMagnetism(deltaTime);
 			//magneticSimulation(deltaTime);
-			scenemagnetism(deltaTime);
+			
 
 			mainSimulation(deltaTime);
 		}
