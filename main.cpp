@@ -2,6 +2,7 @@
 #include "src/BulletWorld.h"
 #include "src/BulletShape.h"
 #include "bullet\btBulletDynamicsCommon.h"
+#include <chrono>
 
 // tag::globalVariables[]
 // tag::using[]
@@ -23,7 +24,9 @@ double lastTime = 0;
 double currentTime = 0;
 double deltaTime = 0.01;
 double accumulator = 0;
-double time = 0;
+double ttime = 0;
+float testTime = 0;
+int testCount = 0;
 
 double physicsSpeed = 0.5;
 // end::globalVariables[]
@@ -87,6 +90,11 @@ GLuint vertexDataBufferObject;
 GLuint vertexArrayObject;
 // end::GLVariables[]
 
+void writetolog(std::string text)
+{
+	std::ofstream filelog("../logfile.txt", std::ios_base::out | std::ios_base::app);
+	filelog << text << endl;
+}
 // end Global Variables
 /////////////////////////
 
@@ -496,6 +504,12 @@ void handleInput()
 					break;
 				case SDLK_m: magnetismMethod = 3;
 					break;
+
+				case SDLK_r:
+					cout << "timer result: " << (testTime / testCount)/100000000 << endl;
+					testTime = 0;
+					testCount = 0;
+					break;
 				}
 			break;
 
@@ -523,11 +537,6 @@ void handleInput()
 		}
 	
 	}
-}
-
-float Magnitude(btVector3 vec)
-{
-	return 0.0f;
 }
 
 float magneticStrengthCalculation(float I, btVector3 magnet, btVector3 object)
@@ -570,11 +579,20 @@ float zcurl(float x, float y)
 	return x-y;
 }
 
-btVector3 VectorField(btVector3 A)
+btVector3 CustomVectorField(btVector3 A)
 {
 	float x = xfield(A.x(), A.y(), A.z());
 	float y = yfield(A.x(), A.y(), A.z());
 	float z = zfield(A.x(), A.y(), A.z());
+
+	return btVector3(x, y, z);
+}
+
+btVector3 PoleVectorField(btVector3 A)
+{
+	float x;
+	float y;
+	float z;
 
 	float r = glm::sqrt(A.x()*A.x()*A.y()*A.y()*A.z()*A.z());
 	float rz = glm::sqrt(A.x()*A.x()*A.y()*A.y());
@@ -583,13 +601,13 @@ btVector3 VectorField(btVector3 A)
 	float sinth = rz / r;
 	double sinph = A.y() / rz;
 	float cosph = A.x() / rz;
-	
+
 	float eth = 2 * sinth;
 
 	x = sinth*cosph*costh + costh*cosph*eth;
 	y = sinth*sinph*costh + costh*sinph*eth;
 	z = costh * costh - sinth * eth;
-	
+
 	//std::cout << x << "   " << y << "   " << z << endl;
 	return -btVector3(x*0.003f, y*0.003f, z*0.003f);
 }
@@ -607,7 +625,7 @@ btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
 	btVector3 v1 = magneticForce(point, pole1);
 	btVector3 v2 = magneticForce(pole2, point);
 	btVector3 v3 = v1 + v2;
-	std::cout << v3.x() << "   " << v3.y() << "   " << v3.z() << endl;
+	//std::cout << v3.x() << "   " << v3.y() << "   " << v3.z() << endl;
 	v3.normalize();
 	v3.operator*=(-point.length());
 	return v3 + point;
@@ -616,8 +634,8 @@ btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
 btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
 {
 	btVector3 lf = 1.0f*(v.cross(b));
-	//cout << v.y() << endl;
-		return lf;
+	writetolog(std::to_string(lf.length()));
+	return lf;
 }
 
 btVector3 positionalDifference(btTransform shape, btTransform magnet)
@@ -661,6 +679,8 @@ btVector3 magnetPoint(int point, btVector3 position, float extent)
 // simulation methods
 void ParticleEstimatedField(double simTime)
 {
+	bool add = false;
+	auto start_time = std::chrono::high_resolution_clock::now();
 	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
 	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
@@ -675,11 +695,20 @@ void ParticleEstimatedField(double simTime)
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				activeScene.shapes[i]->rigidBody->applyCentralForce(
-					fieldCalculation(shape.getOrigin(), activeScene.shapes[k]->getPoleS(), activeScene.shapes[k]->getPoleN()) *
-						magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				//activeScene.shapes[i]->rigidBody->applyCentralForce(
+					//fieldCalculation(shape.getOrigin(), activeScene.shapes[k]->getPoleS(), activeScene.shapes[k]->getPoleN()) *
+						//-magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
+				activeScene.shapes[i]->rigidBody->applyCentralForce(positionalDifference(shape, magnet) * -magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				writetolog(std::to_string(shape.getOrigin().y()));
+				add = true;			
 			}
 		}
+	}
+	auto end_time = std::chrono::high_resolution_clock::now();
+	if (add)
+	{
+		testTime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+		testCount++;
 	}
 }
 
@@ -699,7 +728,7 @@ void ParticleLorentzVectorField(double simTime)
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				btVector3 lf = LorentzForce(1000.0f, activeScene.shapes[i]->rigidBody->getLinearVelocity(), VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				btVector3 lf = LorentzForce(1000.0f, activeScene.shapes[i]->rigidBody->getLinearVelocity(), PoleVectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
 				activeScene.shapes[i]->rigidBody->applyCentralForce(lf);
 			}
 		}
@@ -722,7 +751,7 @@ void ParticleVectorField(double simTime)
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				activeScene.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				activeScene.shapes[i]->rigidBody->applyCentralForce(PoleVectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
 			}
 		}
 	}
@@ -730,6 +759,8 @@ void ParticleVectorField(double simTime)
 
 void CornerBasedPositionalDifference(double simTime)
 {
+	bool add = false;
+	auto start_time = std::chrono::high_resolution_clock::now();
 	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
 	for (int i = 0; i < activeScene.shapes.size(); i++)
 	{
@@ -744,7 +775,6 @@ void CornerBasedPositionalDifference(double simTime)
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else
 			{
-				btVector3 force = btVector3(0.0f, 0.0f, 0.0f);
 				for (int p = 0; p < 8; p++)
 				{
 					activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
@@ -753,16 +783,24 @@ void CornerBasedPositionalDifference(double simTime)
 					{
 						activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
 						shape.setOrigin(magnetPoint(q, shape.getOrigin(), activeScene.shapes[i]->vertExtent));
-						if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && activeScene.shapes[k])
+						if (shape.getOrigin().distance(magnet.getOrigin()) <= 20.0f && activeScene.shapes[k])
 						{
-							activeScene.shapes[i]->rigidBody->applyForce(
-								positionalDifference(shape, magnet) * 
-								magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
+							//activeScene.shapes[i]->rigidBody->applyForce(
+								//positionalDifference(shape, magnet) * 
+								//magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
+							activeScene.shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet) * shape.getOrigin().distance(magnet.getOrigin()), shape.getOrigin());
+							add = true;
 						}
 					}
 				}
 			}
 		}
+	}
+	auto end_time = std::chrono::high_resolution_clock::now();
+	if (add)
+	{
+		testTime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+		testCount++;
 	}
 }
 
@@ -954,7 +992,7 @@ int main(int argc, char* args[])
 		while (accumulator >= deltaTime)
 		{
 			accumulator -= deltaTime;
-			time += deltaTime;
+			ttime += deltaTime;
 
 			switch (magnetismMethod)
 			{
@@ -974,7 +1012,10 @@ int main(int argc, char* args[])
 
 			mainSimulation(deltaTime);
 		}
-
+		//btTransform trans;
+		//activeScene.shapes[0]->rigidBody->getMotionState()->getWorldTransform(trans);
+		//string pos = trans
+		//writetolog()
 		preRender();
 
 		//render(); // this should render the world state according to VARIABLES -
