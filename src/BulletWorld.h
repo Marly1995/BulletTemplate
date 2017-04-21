@@ -20,5 +20,6 @@ public:
 	void SceneThree();
 	void SceneFour();
 	void SceneFive();
+	void SceneSix();
 };
 

@@ -27,6 +27,9 @@ public:
 	BulletShape(btCollisionShape* newShape, btTransform newTransform, btScalar newMass, float vertScale, int buffer, bool isMagnet, bool isMetal);
 	~BulletShape();
 
+	btVector3 getPoleN();
+	btVector3 getPoleS();
+
 	void CreateVertexData(float vs);
 	void PickColor(int col);
 	void CreateBox(float vs);

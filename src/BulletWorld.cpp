@@ -55,7 +55,7 @@ void BulletWorld::SceneOne()
 	btVector3 fall(0, 0, 0);
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.2, 0.2, 0.2));
-	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 10, 0)), btScalar(10), 0.2f, shapes.size(), true, true);
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2, 10, 0)), btScalar(10), 0.2f, shapes.size(), true, true);
 	shapes.push_back(cube);
 
 	BulletShape* magnet = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 2, 0)), btScalar(50), 0.2f, shapes.size(), true, true);
@@ -183,4 +183,33 @@ void BulletWorld::SceneFive()
 		dynamicsWorld->addRigidBody(shapes[i]->rigidBody);
 	}
 }
+
+void BulletWorld::SceneSix()
+{
+	btVector3 fall(0, 0, 0);
+
+	btCollisionShape* btcube = new btBoxShape(btVector3(0.2, 0.2, 0.2));
+	BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(2, 0, 0)), btScalar(10), 0.2f, shapes.size(), false, true);
+	shapes.push_back(cube);
+
+	btCollisionShape* btPlane = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
+	BulletShape* plane = new BulletShape(btPlane, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)), btScalar(0), 1.0f, shapes.size(), false, false);
+	shapes.push_back(plane);
+
+	// define gravity
+	dynamicsWorld->setGravity(btVector3(0.0f, -9.81f, 0.0f));
+	for (int i = 0; i < shapes.size(); i++)
+	{
+		shapes[i]->shape->calculateLocalInertia(shapes[i]->mass, fall);
+		shapes[i]->rigidBody->setFriction(2.0f);
+		dynamicsWorld->addRigidBody(shapes[i]->rigidBody);
+	}
+
+	BulletShape* magnet = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 2, 0)), btScalar(0), 0.2f, shapes.size(), true, true);
+	shapes.push_back(magnet);
+	dynamicsWorld->addRigidBody(shapes[shapes.size() - 1]->rigidBody);
+}
+
+
+
 

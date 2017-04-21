@@ -481,6 +481,11 @@ void handleInput()
 					activeScene.SceneFive();
 					loadAssets();
 					break;
+				case SDLK_6: activeScene =
+					BulletWorld();
+					activeScene.SceneSix();
+					loadAssets();
+					break;
 
 					// simulation metho selection
 				case SDLK_v: magnetismMethod = 0;
@@ -599,12 +604,13 @@ btVector3 magneticForce(btVector3 point, btVector3 magnet)
 
 btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
 {
-	pole1.setY(pole1.y() - 0.1f);
-	pole2.setY(pole2.y() + 0.1f);
 	btVector3 v1 = magneticForce(point, pole1);
 	btVector3 v2 = magneticForce(pole2, point);
 	btVector3 v3 = v1 + v2;
-	return v3.normalized();
+	std::cout << v3.x() << "   " << v3.y() << "   " << v3.z() << endl;
+	v3.normalize();
+	v3.operator*=(-point.length());
+	return v3 + point;
 }
 
 btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
@@ -616,7 +622,7 @@ btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
 
 btVector3 positionalDifference(btTransform shape, btTransform magnet)
 {
-	return (magnet.getOrigin() - shape.getOrigin());
+	return (magnet.getOrigin() - shape.getOrigin()).normalized();
 }
 
 btVector3 magnetPoint(int point, btVector3 position, float extent)
@@ -652,7 +658,77 @@ btVector3 magnetPoint(int point, btVector3 position, float extent)
 	return position;
 }
 
-void cornerBasedMagnetism(double simTime)
+// simulation methods
+void ParticleEstimatedField(double simTime)
+{
+	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < activeScene.shapes.size(); i++)
+	{
+		btTransform shape;
+		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
+
+		for (int k = 0; k < activeScene.shapes.size(); k++)
+		{
+			btTransform magnet;
+			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
+			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
+			{
+				activeScene.shapes[i]->rigidBody->applyCentralForce(
+					fieldCalculation(shape.getOrigin(), activeScene.shapes[k]->getPoleS(), activeScene.shapes[k]->getPoleN()) *
+						magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+			}
+		}
+	}
+}
+
+void ParticleLorentzVectorField(double simTime)
+{
+	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < activeScene.shapes.size(); i++)
+	{
+		btTransform shape;
+		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
+
+		for (int k = 0; k < activeScene.shapes.size(); k++)
+		{
+			btTransform magnet;
+			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
+			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
+			{
+				btVector3 lf = LorentzForce(1000.0f, activeScene.shapes[i]->rigidBody->getLinearVelocity(), VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				activeScene.shapes[i]->rigidBody->applyCentralForce(lf);
+			}
+		}
+	}
+}
+
+void ParticleVectorField(double simTime)
+{
+	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
+	for (int i = 0; i < activeScene.shapes.size(); i++)
+	{
+		btTransform shape;
+		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
+		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
+
+		for (int k = 0; k < activeScene.shapes.size(); k++)
+		{
+			btTransform magnet;
+			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
+			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
+			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
+			{
+				activeScene.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+			}
+		}
+	}
+}
+
+void CornerBasedPositionalDifference(double simTime)
 {
 	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
 	for (int i = 0; i < activeScene.shapes.size(); i++)
@@ -677,86 +753,19 @@ void cornerBasedMagnetism(double simTime)
 					{
 						activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
 						shape.setOrigin(magnetPoint(q, shape.getOrigin(), activeScene.shapes[i]->vertExtent));
-						if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f && activeScene.shapes[k])
-						{							
-							activeScene.shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
-						}						
-					}					
+						if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f && activeScene.shapes[k])
+						{
+							activeScene.shapes[i]->rigidBody->applyForce(
+								positionalDifference(shape, magnet) * 
+								magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
+						}
+					}
 				}
 			}
 		}
 	}
 }
 
-void particleBasedMagnetism(double simTime)
-{
-	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
-	for (int i = 0; i < activeScene.shapes.size(); i++)
-	{
-		btTransform shape;
-		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
-
-		for (int k = 0; k < activeScene.shapes.size(); k++)
-		{
-			btTransform magnet;
-			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
-			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
-			{
-				activeScene.shapes[i]->rigidBody->applyCentralForce(VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-			}
-		}
-	}
-}
-
-void scenemagnetism(double simTime)
-{
-	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
-	for (int i = 0; i < activeScene.shapes.size(); i++)
-	{
-		btTransform shape;
-		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
-
-		for (int k = 0; k < activeScene.shapes.size(); k++)
-		{
-			btTransform magnet;
-			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
-			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
-			{
-				activeScene.shapes[i]->rigidBody->applyCentralForce(
-					fieldCalculation(positionalDifference(shape, magnet), magnet.getOrigin(), magnet.getOrigin()) * 
-						magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-			}
-		}
-	}
-}
-
-void particleRealCalculation(double simTime)
-{
-	activeScene.dynamicsWorld->stepSimulation(simTime * physicsSpeed, 1);
-	for (int i = 0; i < activeScene.shapes.size(); i++)
-	{
-		btTransform shape;
-		activeScene.shapes[i]->rigidBody->getMotionState()->getWorldTransform(shape);
-		shape.getOpenGLMatrix(glm::value_ptr(activeScene.shapes[i]->GLmatrix));
-
-		for (int k = 0; k < activeScene.shapes.size(); k++)
-		{
-			btTransform magnet;
-			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
-			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
-			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
-			{
-				btVector3 lf = LorentzForce(1000.0f, activeScene.shapes[i]->rigidBody->getLinearVelocity(), VectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-				activeScene.shapes[i]->rigidBody->applyCentralForce(lf);
-			}
-		}
-	}
-}
-// tag::updateSimulation[]
 
 void cameraSimulation(double simTime)
 {
@@ -811,7 +820,6 @@ void mainSimulation(double simTime) //update simulation with an amount of time t
 {
 	cameraSimulation(simTime);
 }
-// end::updateSimulation[]
 
 // tag::preRender[]
 void preRender()
@@ -951,16 +959,16 @@ int main(int argc, char* args[])
 			switch (magnetismMethod)
 			{
 			case 0:
-				scenemagnetism(deltaTime);
+				ParticleEstimatedField(deltaTime);
 				break;
 			case 1:
-				particleRealCalculation(deltaTime);
+				ParticleLorentzVectorField(deltaTime);
 				break;
 			case 2:
-				particleBasedMagnetism(deltaTime);
+				ParticleVectorField(deltaTime);
 				break;
 			case 3:
-				cornerBasedMagnetism(deltaTime);
+				CornerBasedPositionalDifference(deltaTime);
 				break;
 			}	
 

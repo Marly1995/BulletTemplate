@@ -25,6 +25,24 @@ BulletShape::~BulletShape()
 	//delete shape;
 }
 
+btVector3 BulletShape::getPoleN()
+{
+	btTransform trans;
+	rigidBody->getMotionState()->getWorldTransform(trans);
+	btVector3 vec = trans.getOrigin();
+	vec.setY(vec.getY() + vertExtent);
+	return vec;
+}
+
+btVector3 BulletShape::getPoleS()
+{
+	btTransform trans;
+	rigidBody->getMotionState()->getWorldTransform(trans);
+	btVector3 vec = trans.getOrigin();
+	vec.setY(vec.getY() - vertExtent);
+	return vec;
+}
+
 void BulletShape::PickColor(int col)
 {
 	switch (col)
