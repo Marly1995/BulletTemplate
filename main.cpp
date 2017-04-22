@@ -506,7 +506,7 @@ void handleInput()
 					break;
 
 				case SDLK_r:
-					cout << "timer result: " << (testTime / testCount)/100000000 << endl;
+					cout << "timer result: " << (testTime / testCount) << endl;
 					testTime = 0;
 					testCount = 0;
 					break;
@@ -542,7 +542,8 @@ void handleInput()
 float magneticStrengthCalculation(float I, btVector3 magnet, btVector3 object)
 {
 	float R = magnet.distance(object);
-	float H = 1000.0f / (2 * glm::pi<float>() * R);
+	float H = 125.0f / (2 * glm::pi<float>() * R);
+	//writetolog(std::to_string(H));
 	return H;
 }
 
@@ -617,7 +618,9 @@ btVector3 magneticForce(btVector3 point, btVector3 magnet)
 	btVector3 vec = point - magnet;
 	float dist = vec.length();
 	float str = 100.0f / dist*dist;
-	return btVector3(vec.x()*str, vec.y()*str, vec.z()*str);
+	vec = btVector3(vec.x()*str, vec.y()*str, vec.z()*str);
+	writetolog(std::to_string(vec.length()));
+	return vec;
 }
 
 btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
@@ -631,16 +634,15 @@ btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
 	return v3 + point;
 }
 
-btVector3 LorentzForce(float q, btVector3 v, btVector3 b)
+btVector3 LorentzForce(btVector3 v, btVector3 b)
 {
 	btVector3 lf = 1.0f*(v.cross(b));
-	writetolog(std::to_string(lf.length()));
 	return lf;
 }
 
 btVector3 positionalDifference(btTransform shape, btTransform magnet)
 {
-	return (magnet.getOrigin() - shape.getOrigin()).normalized();
+	return (magnet.getOrigin() - shape.getOrigin());// .normalized();
 }
 
 btVector3 magnetPoint(int point, btVector3 position, float extent)
@@ -693,14 +695,14 @@ void ParticleEstimatedField(double simTime)
 			btTransform magnet;
 			activeScene.shapes[k]->rigidBody->getMotionState()->getWorldTransform(magnet);
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
-			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
+			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f)
 			{
 				//activeScene.shapes[i]->rigidBody->applyCentralForce(
 					//fieldCalculation(shape.getOrigin(), activeScene.shapes[k]->getPoleS(), activeScene.shapes[k]->getPoleN()) *
-						//-magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));				
-				activeScene.shapes[i]->rigidBody->applyCentralForce(positionalDifference(shape, magnet) * -magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
-				writetolog(std::to_string(shape.getOrigin().y()));
-				add = true;			
+						//-magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));					
+				activeScene.shapes[i]->rigidBody->applyCentralForce(LorentzForce(activeScene.shapes[i]->rigidBody->getLinearVelocity(), magneticForce(shape.getOrigin(), magnet.getOrigin())));
+				//writetolog(std::to_string(shape.getOrigin().y()));
+				add = true;
 			}
 		}
 	}
@@ -728,7 +730,7 @@ void ParticleLorentzVectorField(double simTime)
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 5.0f)
 			{
-				btVector3 lf = LorentzForce(1000.0f, activeScene.shapes[i]->rigidBody->getLinearVelocity(), PoleVectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
+				btVector3 lf = LorentzForce(activeScene.shapes[i]->rigidBody->getLinearVelocity(), PoleVectorField(positionalDifference(shape, magnet)) * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));
 				activeScene.shapes[i]->rigidBody->applyCentralForce(lf);
 			}
 		}
@@ -788,7 +790,7 @@ void CornerBasedPositionalDifference(double simTime)
 							//activeScene.shapes[i]->rigidBody->applyForce(
 								//positionalDifference(shape, magnet) * 
 								//magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()), shape.getOrigin());
-							activeScene.shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet) * shape.getOrigin().distance(magnet.getOrigin()), shape.getOrigin());
+							activeScene.shapes[i]->rigidBody->applyForce(positionalDifference(shape, magnet), shape.getOrigin());
 							add = true;
 						}
 					}
