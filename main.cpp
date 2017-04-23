@@ -28,7 +28,7 @@ double ttime = 0;
 float testTime = 0;
 int testCount = 0;
 
-double physicsSpeed = 0.5;
+double physicsSpeed = 0.1;
 // end::globalVariables[]
 glm::mat4 modelMatrix;
 glm::mat4 projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
@@ -619,7 +619,6 @@ btVector3 magneticForce(btVector3 point, btVector3 magnet)
 	float dist = vec.length();
 	float str = 100.0f / dist*dist;
 	vec = btVector3(vec.x()*str, vec.y()*str, vec.z()*str);
-	writetolog(std::to_string(vec.length()));
 	return vec;
 }
 
@@ -636,7 +635,7 @@ btVector3 fieldCalculation(btVector3 point, btVector3 pole1, btVector3 pole2)
 
 btVector3 LorentzForce(btVector3 v, btVector3 b)
 {
-	btVector3 lf = 1.0f*(v.cross(b));
+	btVector3 lf = 1.0f*(b + v.cross(b));
 	return lf;
 }
 
@@ -700,7 +699,7 @@ void ParticleEstimatedField(double simTime)
 				//activeScene.shapes[i]->rigidBody->applyCentralForce(
 					//fieldCalculation(shape.getOrigin(), activeScene.shapes[k]->getPoleS(), activeScene.shapes[k]->getPoleN()) *
 						//-magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));					
-				activeScene.shapes[i]->rigidBody->applyCentralForce(LorentzForce(activeScene.shapes[i]->rigidBody->getLinearVelocity(), magneticForce(shape.getOrigin(), magnet.getOrigin())));
+				activeScene.shapes[i]->rigidBody->applyCentralForce(LorentzForce(activeScene.shapes[i]->rigidBody->getLinearVelocity(), -magneticForce(shape.getOrigin(), magnet.getOrigin())));
 				//writetolog(std::to_string(shape.getOrigin().y()));
 				add = true;
 			}
