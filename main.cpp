@@ -458,9 +458,20 @@ void handleInput()
 					break;
 				case SDLK_e: cameraDown = true;
 					break;
-				case SDLK_SPACE: cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
-					cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-					cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
+				case SDLK_SPACE: 
+					cameraPosition = glm::vec3(0.25f, 1.7f, 6.8f);
+					yaw = 270;
+					pitch = 4.85;
+					break;
+				case SDLK_z:
+					cameraPosition = glm::vec3(0.64f, 14.3f, -1.0f);
+					yaw = 90;
+					pitch = 90;
+					break;
+				case SDLK_x:
+					cameraPosition = glm::vec3(7.8f, 0.6f, 0.0f);
+					yaw = 180;
+					pitch = 2;
 					break;
 
 					// scene selection
@@ -805,7 +816,6 @@ void CornerBasedPositionalDifference(double simTime)
 	}
 }
 
-
 void cameraSimulation(double simTime)
 {
 	cameraSpeed = 2.0f * simTime;
@@ -975,8 +985,8 @@ int main(int argc, char* args[])
 
 	loadAssets();
 
-	//SDL_CaptureMouse(SDL_TRUE);
-	//SDL_ShowCursor(SDL_DISABLE);
+	SDL_CaptureMouse(SDL_TRUE);
+	SDL_ShowCursor(SDL_DISABLE);
 
 	while (!done) //loop until done flag is set)
 	{
