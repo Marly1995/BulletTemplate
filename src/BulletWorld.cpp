@@ -161,7 +161,7 @@ void BulletWorld::SceneFive()
 
 	btCollisionShape* btcube = new btBoxShape(btVector3(0.1, 0.1, 0.1));
 
-	for (int i = 0; i < 50; i++)
+	for (int i = 0; i < 20; i++)
 	{
 		BulletShape* cube = new BulletShape(btcube, btTransform(btQuaternion(0, 0, 0, 1), btVector3(rand() % 10 - 5, rand() % 100 + 50, rand() % 10 - 5)), btScalar(1), 0.1f, shapes.size(), false, true);
 		shapes.push_back(cube);
