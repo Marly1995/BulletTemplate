@@ -55,6 +55,7 @@ glm::vec3 cameraFront = glm::vec3(-0.5f, 0.5f, -.5f);
 glm::vec3 cameraViewUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 GLfloat pitch, yaw;
+GLfloat savePitch, saveYaw;
 
 bool cameraForward = false;
 bool cameraBackward = false;
@@ -424,6 +425,20 @@ void initPhysics()
 	activeScene.SceneOne();
 }
 
+void cameraSave()
+{
+	if (!pause)
+	{
+		savePitch = pitch;
+		saveYaw = yaw;
+	}
+	else
+	{
+		pitch = savePitch;
+		yaw = saveYaw;
+	}
+}
+
 // TODO: comtrols to move magnet for testing real time performance
 void handleInput()
 {
@@ -446,7 +461,9 @@ void handleInput()
 					//hit escape to exit
 				case SDLK_ESCAPE: done = true;
 					break;
-				case SDLK_RETURN: pause = !pause;
+				case SDLK_RETURN: 
+					cameraSave();
+					pause = !pause;
 					break;
 
 				case SDLK_w: cameraForward = true;
@@ -479,37 +496,43 @@ void handleInput()
 
 					// scene selection
 				case SDLK_1: activeScene = 
-				BulletWorld();
-					pause = true;
+					BulletWorld();
+					cameraSave();
+					pause = true;					
 					activeScene.SceneOne();
 					loadAssets();
 					break;
 				case SDLK_2: activeScene =
 					BulletWorld();
+					cameraSave();
 					pause = true;
 					activeScene.SceneTwo();
 					loadAssets();
 					break;
 				case SDLK_3: activeScene =
 					BulletWorld();
+					cameraSave();
 					pause = true;
 					activeScene.SceneThree();
 					loadAssets();
 					break;
 				case SDLK_4: activeScene =
 					BulletWorld();
+					cameraSave();
 					pause = true;
 					activeScene.SceneFour();
 					loadAssets();
 					break;
 				case SDLK_5: activeScene =
 					BulletWorld();
+					cameraSave();
 					pause = true;
 					activeScene.SceneFive();
 					loadAssets();
 					break;
 				case SDLK_6: activeScene =
 					BulletWorld();
+					cameraSave();
 					pause = true;
 					activeScene.SceneSix();
 					loadAssets();
@@ -722,11 +745,9 @@ void ParticleEstimatedField(double simTime)
 			if (k == i || !activeScene.shapes[k]->magnet || !activeScene.shapes[i]->metal) {}
 			else if (shape.getOrigin().distance(magnet.getOrigin()) <= 10.0f)
 			{
-				//activeScene.shapes[i]->rigidBody->applyCentralForce(
-					//fieldCalculation(shape.getOrigin(), activeScene.shapes[k]->getPoleS(), activeScene.shapes[k]->getPoleN()) *
-						//-magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));					
-				//activeScene.shapes[i]->rigidBody->applyCentralForce(LorentzForce(activeScene.shapes[i]->rigidBody->getLinearVelocity(), -magneticForce(shape.getOrigin(), magnet.getOrigin())));
-				//writetolog(std::to_string(shape.getOrigin().y()));
+				activeScene.shapes[i]->rigidBody->applyCentralForce(
+					positionalDifference(shape, magnet) *
+						100.0f * magneticStrengthCalculation(activeScene.shapes[k]->charge, shape.getOrigin(), magnet.getOrigin()));					
 				add = true;
 			}
 		}
